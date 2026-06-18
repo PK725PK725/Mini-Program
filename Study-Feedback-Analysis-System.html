@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>📊研習回饋單分析系統</title>
+
+<!-- =====================================================
+     圖示
+===================================================== -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- =====================================================
+     TailwindCSS
+===================================================== -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- =====================================================
+     XLSX 讀取套件
+===================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['"Microsoft JhengHei"', 'sans-serif']
+      },
+      animation: {
+        float: 'float 10s infinite alternate ease-in-out'
+      },
+      keyframes: {
+        float: {
+          '0%': { transform: 'translateY(0px)' },
+          '100%': { transform: 'translateY(35px)' }
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style>
+/* =====================================================
+   基本設定
+===================================================== */
+*{
+  box-sizing:border-box;
+}
+
+input,select,textarea{
+  max-width:100%;
+}
+
+body{
+  font-family:"Microsoft JhengHei",sans-serif;
+  background:
+    radial-gradient(circle at top left,#ffd6e7 0%,transparent 30%),
+    radial-gradient(circle at bottom right,#ffe5b4 0%,transparent 30%),
+    linear-gradient(135deg,#fff7f0 0%,#ffeef4 50%,#fff4d5 100%);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* =====================================================
+   毛玻璃
+===================================================== */
+.glass{
+  background:rgba(255,255,255,.78);
+  backdrop-filter:blur(15px);
+  border:1px solid rgba(255,255,255,.4);
+  box-shadow:0 18px 45px rgba(0,0,0,.12);
+}
+
+/* =====================================================
+   浮動背景
+===================================================== */
+.floating{
+  position:fixed;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:.35;
+  z-index:-1;
+}
+
+/* =====================================================
+   按鈕
+===================================================== */
+.main-btn{
+  background:linear-gradient(135deg,#ff758f,#ff9a8b);
+  transition:.25s;
+}
+
+.main-btn:hover{
+  transform:translateY(-3px) scale(1.02);
+  box-shadow:0 12px 30px rgba(255,117,143,.35);
+}
+
+.clear-btn{
+  background:linear-gradient(135deg,#36d1dc,#5b86e5);
+  transition:.25s;
+}
+
+.clear-btn:hover{
+  transform:translateY(-3px);
+}
+
+/* =====================================================
+   滿意度大數字
+===================================================== */
+.big-score{
+  font-size:clamp(2.2rem,6vw,4.5rem);
+  font-weight:900;
+  line-height:1;
+}
+
+/* =====================================================
+   進度條
+===================================================== */
+.progress-wrap{
+  width:100%;
+  height:20px;
+  background:#ececec;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  border-radius:999px;
+  transition:1s;
+  background:linear-gradient(90deg,#ff758f,#ffb199);
+}
+
+/* =====================================================
+   卡片動畫
+===================================================== */
+.card-hover{
+  transition:.25s;
+}
+
+.card-hover:hover{
+  transform:translateY(-6px);
+}
+
+/* =====================================================
+   表格
+===================================================== */
+.table-style{
+  width:100%;
+  border-collapse:collapse;
+  overflow:hidden;
+  border-radius:20px;
+}
+
+.table-style th{
+  background:linear-gradient(135deg,#ff758f,#ff9a8b);
+  color:white;
+  padding:14px;
+  text-align:center;
+  font-size:1rem;
+}
+
+.table-style td{
+  padding:12px;
+  text-align:center;
+  border-bottom:1px solid #eee;
+  font-weight:600;
+}
+
+/* =====================================================
+   列表
+===================================================== */
+.result-list li{
+  margin-bottom:12px;
+  line-height:1.8;
+}
+
+/* =====================================================
+   響應式
+===================================================== */
+@media(max-width:768px){
+
+  .mobile-col{
+    grid-template-columns:1fr !important;
+  }
+
+}
+</style>
+</head>
+
+<body>
+
+<!-- =====================================================
+     背景裝飾
+===================================================== -->
+<div class="floating w-[300px] h-[300px] bg-pink-300 top-[-100px] left-[-80px] animate-float"></div>
+<div class="floating w-[260px] h-[260px] bg-yellow-300 bottom-[-90px] right-[-60px] animate-float"></div>
+<div class="floating w-[220px] h-[220px] bg-orange-300 top-[40%] right-[-50px] animate-float"></div>
+
+<!-- =====================================================
+     主容器
+===================================================== -->
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- =====================================================
+       標題區
+  ===================================================== -->
+  <div class="glass rounded-[35px] p-6 md:p-10 text-center mb-8">
+
+    <div class="text-6xl mb-5">
+      📊✨
+    </div>
+
+    <h1 class="text-3xl md:text-5xl font-black text-gray-800 mb-4">
+      <i class="bi bi-bar-chart-line-fill"></i>
+      研習回饋單分析系統
+    </h1>
+
+    <p class="text-gray-600 text-lg leading-8">
+      上傳 XLSX 檔案，自動分析研習回饋內容與滿意度
+    </p>
+
+  </div>
+
+  <!-- =====================================================
+       注意事項
+  ===================================================== -->
+  <div class="glass rounded-[35px] p-6 md:p-8 mb-8">
+
+    <div class="flex items-center gap-4 mb-6">
+
+      <div class="text-5xl">🔒</div>
+
+      <div>
+
+        <h2 class="text-3xl font-black text-gray-800">
+          上傳檔案注意事項
+        </h2>
+
+        <p class="text-gray-600 mt-2">
+          請先移除個資與可識別資訊
+        </p>
+
+      </div>
+
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 shadow-lg border border-pink-100 leading-9 text-gray-700">
+
+      1️⃣ 請務必去除可識別資料與講師、學員個資<br>
+
+      2️⃣ 請重新命名 XLSX 檔名為亂數名稱<br>
+
+      3️⃣ 請刪除「時間戳記」、「您的姓名」、「您的服務單位」欄位<br>
+
+      4️⃣ 請將任何講師、助教姓名取代成空白<br>
+
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+       上傳區
+  ===================================================== -->
+  <div class="glass rounded-[35px] p-6 md:p-8 mb-8">
+
+    <div class="grid md:grid-cols-2 gap-8 mobile-col">
+
+      <!-- 左側 -->
+      <div>
+
+        <h2 class="text-3xl font-black text-gray-800 mb-5">
+          <i class="fa-solid fa-file-excel text-green-600"></i>
+          XLSX 檔案上傳
+        </h2>
+
+        <div class="bg-white rounded-3xl p-5 shadow-lg border border-pink-100 leading-8 text-gray-700">
+
+          <div class="font-black text-pink-600 mb-3">
+            第一區｜研習回饋情況
+          </div>
+
+          • 課程實用性<br>
+          • 研習的意見<br>
+          • 未來課程建議<br>
+          • 其他<br><br>
+
+          <div class="font-black text-orange-500 mb-3">
+            第二區｜研習滿意度
+          </div>
+
+          • 研習課程目標<br>
+          • 研習課程內容<br>
+          • 講座授課方式
+
+        </div>
+
+      </div>
+
+      <!-- 右側 -->
+      <div class="bg-white rounded-3xl p-6 shadow-xl border border-pink-100">
+
+        <input
+          type="file"
+          id="excelFile"
+          accept=".xlsx,.xls"
+          class="w-full p-4 rounded-2xl border border-gray-300 mb-5 text-lg"
+        >
+
+        <button
+          onclick="analyzeData()"
+          class="main-btn w-full p-4 rounded-2xl text-white text-xl font-black"
+        >
+          <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>
+          開始分析
+        </button>
+
+        <button
+          onclick="clearAll()"
+          class="clear-btn w-full p-4 rounded-2xl text-white text-xl font-black mt-4"
+        >
+          <i class="fa-solid fa-trash-can mr-2"></i>
+          清除資料
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+       結果區
+  ===================================================== -->
+  <div id="resultArea" class="hidden">
+
+    <!-- =====================================================
+         第一區
+    ===================================================== -->
+    <div class="glass rounded-[35px] p-6 md:p-8 mb-8">
+
+      <div class="flex items-center gap-4 mb-8">
+
+        <div class="text-5xl">🧠</div>
+
+        <div>
+
+          <h2 class="text-3xl font-black text-gray-800">
+            第一區｜研習回饋分析
+          </h2>
+
+          <p class="text-gray-600 mt-2">
+            自動彙整學員意見與建議
+          </p>
+
+        </div>
+
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mobile-col">
+
+        <!-- 成效 -->
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-pink-100 card-hover">
+
+          <div class="flex items-center gap-3 mb-5">
+
+            <div class="text-4xl">🌟</div>
+
+            <h3 class="text-2xl font-black text-pink-700">
+              研習成效
+            </h3>
+
+          </div>
+
+          <ul id="effectList" class="result-list text-gray-700"></ul>
+
+        </div>
+
+        <!-- 建議 -->
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-orange-100 card-hover">
+
+          <div class="flex items-center gap-3 mb-5">
+
+            <div class="text-4xl">🛠️</div>
+
+            <h3 class="text-2xl font-black text-orange-600">
+              問題檢討與建議
+            </h3>
+
+          </div>
+
+          <ul id="suggestList" class="result-list text-gray-700"></ul>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- =====================================================
+         第二區
+    ===================================================== -->
+    <div class="glass rounded-[35px] p-6 md:p-8">
+
+      <div class="flex items-center gap-4 mb-8">
+
+        <div class="text-5xl">📈</div>
+
+        <div>
+
+          <h2 class="text-3xl font-black text-gray-800">
+            第二區｜研習滿意度分析
+          </h2>
+
+          <p class="text-gray-600 mt-2">
+            顯示各類型滿意度統計
+          </p>
+
+        </div>
+
+      </div>
+
+      <!-- =====================================================
+           滿意度卡片
+      ===================================================== -->
+      <div class="grid md:grid-cols-3 gap-6 mobile-col mb-8">
+
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-pink-100 text-center card-hover">
+
+          <div class="text-6xl mb-4">🎯</div>
+
+          <h3 class="text-2xl font-black mb-4">
+            研習課程目標
+          </h3>
+
+          <div id="goalScore" class="big-score text-pink-600 mb-5">
+            0%
+          </div>
+
+          <div class="progress-wrap">
+            <div id="goalBar" class="progress-bar" style="width:0%"></div>
+          </div>
+
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-orange-100 text-center card-hover">
+
+          <div class="text-6xl mb-4">📚</div>
+
+          <h3 class="text-2xl font-black mb-4">
+            研習課程內容
+          </h3>
+
+          <div id="contentScore" class="big-score text-orange-500 mb-5">
+            0%
+          </div>
+
+          <div class="progress-wrap">
+            <div id="contentBar" class="progress-bar" style="width:0%"></div>
+          </div>
+
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-red-100 text-center card-hover">
+
+          <div class="text-6xl mb-4">🎤</div>
+
+          <h3 class="text-2xl font-black mb-4">
+            講座授課方式
+          </h3>
+
+          <div id="teacherScore" class="big-score text-red-500 mb-5">
+            0%
+          </div>
+
+          <div class="progress-wrap">
+            <div id="teacherBar" class="progress-bar" style="width:0%"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- =====================================================
+           統計表格
+      ===================================================== -->
+      <div class="bg-white rounded-3xl p-6 shadow-xl overflow-x-auto">
+
+        <h3 class="text-2xl font-black text-gray-800 mb-5">
+          📋 滿意度統計表
+        </h3>
+
+        <table class="table-style">
+
+          <thead>
+
+            <tr>
+              <th>項目</th>
+              <th>非常滿意</th>
+              <th>滿意</th>
+              <th>尚可</th>
+              <th>不滿意</th>
+              <th>非常不滿意</th>
+            </tr>
+
+          </thead>
+
+          <tbody id="tableBody">
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+<div style="text-align: center;">
+    彭榮生 製作<BR><BR>
+</div>
+
+
+
+<script>
+/* =====================================================
+   第一區：成效分類
+===================================================== */
+const effectKeywords = [
+  {title:"提升 AI 與數位工具應用能力",keywords:["AI","人工智慧","數位","工具"]},
+  {title:"課程內容具有高度實用性",keywords:["實用","有幫助","好用"]},
+  {title:"增加教學與行政應用能力",keywords:["教學","行政","應用"]},
+  {title:"提升資訊科技操作能力",keywords:["操作","練習","使用"]},
+  {title:"講師解說清楚易懂",keywords:["清楚","易懂","講解"]},
+  {title:"增加創新教學想法",keywords:["創新","創意","互動"]},
+  {title:"實作活動有助於理解內容",keywords:["實作","操作","體驗"]},
+  {title:"課程內容豐富且具啟發性",keywords:["豐富","精彩","收穫"]},
+  {title:"有助提升工作效率",keywords:["效率","快速","方便"]},
+  {title:"學員對整體課程反應良好",keywords:["滿意","很好","優秀"]}
+];
+
+/* =====================================================
+   第一區：建議分類
+===================================================== */
+const suggestKeywords = [
+  {title:"建議增加更多實作操作時間",keywords:["時間不夠","實作","操作"]},
+  {title:"希望開設進階相關課程",keywords:["進階","深入","高階"]},
+  {title:"建議增加 AI 應用主題",keywords:["AI","人工智慧"]},
+  {title:"希望增加更多教學案例分享",keywords:["案例","分享","範例"]},
+  {title:"建議放慢課程進行速度",keywords:["太快","速度"]},
+  {title:"希望延長研習時間",keywords:["延長","更多時間"]},
+  {title:"建議增加基礎課程內容",keywords:["基礎","初學"]},
+  {title:"希望提供講義與教材下載",keywords:["講義","教材","下載"]},
+  {title:"建議改善設備與網路環境",keywords:["設備","網路"]},
+  {title:"希望增加互動與討論時間",keywords:["互動","討論"]}
+];
+
+/* =====================================================
+   主分析
+===================================================== */
+function analyzeData(){
+
+  const fileInput = document.getElementById("excelFile");
+
+  const file = fileInput.files[0];
+
+  if(!file){
+
+    alert("請先上傳 XLSX 檔案！");
+    return;
+
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+
+    const data = new Uint8Array(e.target.result);
+
+    const workbook = XLSX.read(data,{type:'array'});
+
+    const sheetName = workbook.SheetNames[0];
+
+    const worksheet = workbook.Sheets[sheetName];
+
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+    if(jsonData.length===0){
+
+      alert("檔案沒有資料！");
+      return;
+
+    }
+
+    analyzeFeedback(jsonData);
+
+    analyzeSatisfaction(jsonData);
+
+    document.getElementById("resultArea").classList.remove("hidden");
+
+    playSuccessSound();
+
+  }
+
+  reader.readAsArrayBuffer(file);
+}
+
+/* =====================================================
+   第一區分析
+===================================================== */
+function analyzeFeedback(data){
+
+  let allText = "";
+
+  data.forEach(row=>{
+
+    allText += `
+      ${row["課程實用性"] || ""}
+      ${row["研習的意見"] || ""}
+      ${row["未來課程建議"] || ""}
+      ${row["其他"] || ""}
+    `;
+
+  });
+
+  const effectResults = [];
+
+  effectKeywords.forEach(item=>{
+
+    let found = false;
+
+    item.keywords.forEach(keyword=>{
+
+      if(allText.includes(keyword)){
+
+        found = true;
+
+      }
+
+    });
+
+    if(found){
+
+      effectResults.push(item.title);
+
+    }
+
+  });
+
+  const suggestResults = [];
+
+  suggestKeywords.forEach(item=>{
+
+    let found = false;
+
+    item.keywords.forEach(keyword=>{
+
+      if(allText.includes(keyword)){
+
+        found = true;
+
+      }
+
+    });
+
+    if(found){
+
+      suggestResults.push(item.title);
+
+    }
+
+  });
+
+  while(effectResults.length < 5){
+
+    effectResults.push("學員普遍表示本次研習具有學習收穫");
+
+  }
+
+  while(suggestResults.length < 5){
+
+    suggestResults.push("建議持續辦理相關研習課程");
+
+  }
+
+  const effectDom = document.getElementById("effectList");
+
+  effectDom.innerHTML = "";
+
+  effectResults.slice(0,10).forEach(item=>{
+
+    effectDom.innerHTML += `
+      <li>✅ ${item}</li>
+    `;
+
+  });
+
+  const suggestDom = document.getElementById("suggestList");
+
+  suggestDom.innerHTML = "";
+
+  suggestResults.slice(0,10).forEach(item=>{
+
+    suggestDom.innerHTML += `
+      <li>📌 ${item}</li>
+    `;
+
+  });
+
+}
+
+/* =====================================================
+   第二區分析
+===================================================== */
+function analyzeSatisfaction(data){
+
+  const goalStats = countAllLevels(data,"研習課程目標");
+
+  const contentStats = countAllLevels(data,"研習課程內容");
+
+  const teacherStats = countAllLevels(data,"講座授課方式");
+
+  updateSatisfactionUI(
+    "goalScore",
+    "goalBar",
+    goalStats.percent
+  );
+
+  updateSatisfactionUI(
+    "contentScore",
+    "contentBar",
+    contentStats.percent
+  );
+
+  updateSatisfactionUI(
+    "teacherScore",
+    "teacherBar",
+    teacherStats.percent
+  );
+
+  createTable(goalStats,contentStats,teacherStats);
+}
+
+/* =====================================================
+   統計所有滿意程度
+===================================================== */
+function countAllLevels(data,column){
+
+  const stats = {
+    veryGood:0,
+    good:0,
+    normal:0,
+    bad:0,
+    veryBad:0,
+    score:0,
+    total:data.length,
+    percent:0
+  };
+
+  data.forEach(row=>{
+
+    const value = String(row[column] || "").trim();
+
+    if(value==="非常滿意"){
+
+      stats.veryGood++;
+      stats.score++;
+
+    }
+    else if(value==="滿意"){
+
+      stats.good++;
+      stats.score++;
+
+    }
+    else if(value==="尚可"){
+
+      stats.normal++;
+
+    }
+    else if(value==="不滿意"){
+
+      stats.bad++;
+
+    }
+    else if(value==="非常不滿意"){
+
+      stats.veryBad++;
+
+    }
+
+  });
+
+  stats.percent = (
+    (stats.score / stats.total) * 100
+  ).toFixed(1);
+
+  return stats;
+}
+
+/* =====================================================
+   更新滿意度 UI
+===================================================== */
+function updateSatisfactionUI(textId,barId,score){
+
+  document.getElementById(textId).innerText = score + "%";
+
+  document.getElementById(barId).style.width = score + "%";
+}
+
+/* =====================================================
+   建立統計表格
+===================================================== */
+function createTable(goal,content,teacher){
+
+  const tbody = document.getElementById("tableBody");
+
+  tbody.innerHTML = `
+    <tr>
+      <td>研習課程目標</td>
+      <td>${goal.veryGood}</td>
+      <td>${goal.good}</td>
+      <td>${goal.normal}</td>
+      <td>${goal.bad}</td>
+      <td>${goal.veryBad}</td>
+    </tr>
+
+    <tr>
+      <td>研習課程內容</td>
+      <td>${content.veryGood}</td>
+      <td>${content.good}</td>
+      <td>${content.normal}</td>
+      <td>${content.bad}</td>
+      <td>${content.veryBad}</td>
+    </tr>
+
+    <tr>
+      <td>講座授課方式</td>
+      <td>${teacher.veryGood}</td>
+      <td>${teacher.good}</td>
+      <td>${teacher.normal}</td>
+      <td>${teacher.bad}</td>
+      <td>${teacher.veryBad}</td>
+    </tr>
+  `;
+}
+
+/* =====================================================
+   清除資料
+===================================================== */
+function clearAll(){
+
+  document.getElementById("excelFile").value = "";
+
+  document.getElementById("resultArea").classList.add("hidden");
+
+  document.getElementById("effectList").innerHTML = "";
+
+  document.getElementById("suggestList").innerHTML = "";
+
+  document.getElementById("tableBody").innerHTML = "";
+
+  updateSatisfactionUI("goalScore","goalBar",0);
+  updateSatisfactionUI("contentScore","contentBar",0);
+  updateSatisfactionUI("teacherScore","teacherBar",0);
+
+  playClearSound();
+}
+
+/* =====================================================
+   成功音效
+===================================================== */
+function playSuccessSound(){
+
+  const ctx = new(window.AudioContext||window.webkitAudioContext)();
+
+  const osc = ctx.createOscillator();
+
+  const gain = ctx.createGain();
+
+  osc.type = "triangle";
+
+  osc.frequency.setValueAtTime(400,ctx.currentTime);
+
+  osc.frequency.exponentialRampToValueAtTime(
+    900,
+    ctx.currentTime+0.3
+  );
+
+  gain.gain.setValueAtTime(0.001,ctx.currentTime);
+
+  gain.gain.exponentialRampToValueAtTime(
+    0.4,
+    ctx.currentTime+0.05
+  );
+
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    ctx.currentTime+0.5
+  );
+
+  osc.connect(gain);
+
+  gain.connect(ctx.destination);
+
+  osc.start();
+
+  osc.stop(ctx.currentTime+0.5);
+}
+
+/* =====================================================
+   清除音效
+===================================================== */
+function playClearSound(){
+
+  const ctx = new(window.AudioContext||window.webkitAudioContext)();
+
+  const osc = ctx.createOscillator();
+
+  const gain = ctx.createGain();
+
+  osc.type = "sine";
+
+  osc.frequency.setValueAtTime(700,ctx.currentTime);
+
+  osc.frequency.exponentialRampToValueAtTime(
+    200,
+    ctx.currentTime+0.3
+  );
+
+  gain.gain.setValueAtTime(0.001,ctx.currentTime);
+
+  gain.gain.exponentialRampToValueAtTime(
+    0.3,
+    ctx.currentTime+0.05
+  );
+
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    ctx.currentTime+0.4
+  );
+
+  osc.connect(gain);
+
+  gain.connect(ctx.destination);
+
+  osc.start();
+
+  osc.stop(ctx.currentTime+0.4);
+}
+</script>
+
+</body>
+</html>
