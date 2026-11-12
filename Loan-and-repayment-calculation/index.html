@@ -1,1 +1,2882 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>貸款利率及還款金額計算機</title>
+  <style>
+    :root {
+      --bg: #f5f9ff;
+      --bg-soft: #eef6ff;
+      --surface: #ffffff;
+      --surface-2: #f8fbff;
+      --surface-3: #eef8f6;
+      --line: #d7e4f2;
+      --line-strong: #b7cbe0;
+      --text: #142033;
+      --muted: #5b6f86;
+      --subtle: #7d8ea2;
+      --primary: #1769e0;
+      --primary-strong: #0d4fb3;
+      --secondary: #0f9f8f;
+      --accent: #f59e0b;
+      --accent-2: #ec4899;
+      --success: #15803d;
+      --warning: #b45309;
+      --danger: #dc2626;
+      --info: #0369a1;
+      --title-grad: linear-gradient(135deg, #1769e0 0%, #0f9f8f 58%, #f59e0b 100%);
+      --soft-grad: linear-gradient(135deg, rgba(23, 105, 224, .11), rgba(15, 159, 143, .10));
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-panel: 0 14px 36px rgba(30, 72, 120, .12);
+      --focus: 0 0 0 3px rgba(23, 105, 224, .24);
+    }
 
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(15, 159, 143, .16), transparent 30%),
+        radial-gradient(circle at 88% 6%, rgba(245, 158, 11, .15), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, var(--bg) 42%, #eff7ff 100%);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.58;
+      overflow-x: hidden;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    summary:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .page {
+      width: min(1360px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 44px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: start;
+      padding: 26px;
+      border: 1px solid rgba(23, 105, 224, .18);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(238,246,255,.92));
+      box-shadow: var(--shadow-panel);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--secondary);
+      font-size: .82rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .hero p:last-child {
+      max-width: 820px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 18px;
+      border: 1px solid #0d4fb3;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(135deg, #1769e0, #0d4fb3);
+      text-decoration: none;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 10px 22px rgba(23, 105, 224, .22);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
+      gap: 18px;
+      align-items: start;
+      margin-top: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, .94);
+      box-shadow: var(--shadow-panel);
+    }
+
+    .panel-header {
+      padding: 18px 20px 0;
+    }
+
+    .panel-title-band {
+      margin: -18px -20px 16px;
+      padding: 16px 20px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      color: #fff;
+      background: var(--title-grad);
+    }
+
+    .panel-body {
+      padding: 18px 20px 20px;
+    }
+
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 1.28rem;
+    }
+
+    h3 {
+      font-size: 1rem;
+    }
+
+    .note {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: .94rem;
+    }
+
+    .panel-title-band .note {
+      color: rgba(255,255,255,.92);
+    }
+
+    .segmented,
+    .toolbar,
+    .quick-row,
+    .result-actions,
+    .result-more-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .segmented {
+      margin-top: 14px;
+    }
+
+    .button,
+    .chip,
+    .segment,
+    .method-tab {
+      min-height: 44px;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      color: var(--text);
+      background: #fff;
+      transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+    }
+
+    .button:hover,
+    .chip:hover,
+    .segment:hover,
+    .method-tab:hover {
+      border-color: rgba(23, 105, 224, .45);
+      background: #f0f7ff;
+      box-shadow: 0 8px 18px rgba(23, 105, 224, .12);
+      transform: translateY(-1px);
+    }
+
+    .button {
+      padding: 10px 16px;
+      font-weight: 900;
+    }
+
+    .button.primary {
+      min-width: 180px;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      box-shadow: 0 12px 22px rgba(23, 105, 224, .20);
+    }
+
+    .button.warning {
+      border-color: rgba(245, 158, 11, .38);
+      color: #7c3d00;
+      background: #fff7ed;
+    }
+
+    .button.ghost {
+      color: var(--primary-strong);
+      border-color: rgba(23, 105, 224, .32);
+      background: #eef6ff;
+    }
+
+    .segment {
+      padding: 9px 15px;
+      font-weight: 900;
+    }
+
+    .loan-type-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .loan-type-row .segmented {
+      margin-top: 0;
+    }
+
+    .loan-type-row .toolbar {
+      margin-left: auto;
+      justify-content: flex-end;
+    }
+
+    .loan-segment {
+      min-height: 56px;
+      padding: 13px 26px;
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .segment.active,
+    .method-tab.active {
+      border-color: transparent;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 10px 22px rgba(15, 159, 143, .20);
+    }
+
+    .chip {
+      padding: 8px 12px;
+      color: var(--primary-strong);
+      font-size: .9rem;
+      font-weight: 850;
+      background: #f8fbff;
+    }
+
+    .toolbar {
+      margin-top: 14px;
+    }
+
+    .calc-toolbar {
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    .field {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #ffffff, #f9fcff);
+    }
+
+    .field + .field {
+      margin-top: 14px;
+    }
+
+    .field-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin: -16px -16px 14px;
+      padding: 13px 16px;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      background: linear-gradient(135deg, rgba(23, 105, 224, .12), rgba(15, 159, 143, .13), rgba(245, 158, 11, .10));
+      border-bottom: 1px solid rgba(23, 105, 224, .16);
+    }
+
+    .label {
+      display: block;
+      color: #0d4fb3;
+      font-size: 1.12rem;
+      font-weight: 950;
+    }
+
+    .required {
+      color: var(--danger);
+      font-size: .92rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .field-desc {
+      max-width: 370px;
+      color: #405870;
+      font-size: .9rem;
+      text-align: right;
+    }
+
+    .more-link {
+      margin-left: 5px;
+      padding: 0;
+      border: 0;
+      color: var(--accent-2);
+      background: transparent;
+      font-weight: 950;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      min-height: auto;
+    }
+
+    .more-link[data-more-tone="blue"] { color: var(--info); }
+    .more-link[data-more-tone="green"] { color: var(--success); }
+    .more-link[data-more-tone="orange"] { color: var(--warning); }
+    .more-link[data-more-tone="pink"] { color: var(--accent-2); }
+    .more-link[data-more-tone="red"] { color: var(--danger); }
+    .more-link[data-more-tone="teal"] { color: var(--secondary); }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .control-row + .control-row {
+      margin-top: 10px;
+    }
+
+    .dual-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .dual-box {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid #dce8f5;
+      border-radius: var(--radius-sm);
+      background: #fff;
+    }
+
+    .dual-box-title {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--secondary);
+      font-weight: 900;
+      font-size: .9rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--secondary);
+    }
+
+    .number-pack {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    input[type="number"] {
+      width: 128px;
+      min-height: 44px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      background: #ffffff;
+      padding: 9px 10px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dual-box input[type="number"] {
+      width: min(118px, 100%);
+    }
+
+    .step-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-sm);
+      color: var(--primary-strong);
+      background: #eef6ff;
+      font-weight: 950;
+    }
+
+    .unit {
+      min-width: 28px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .quick-row {
+      margin-top: 10px;
+    }
+
+    .hint {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .method-note {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .method-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .method-option {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .method-tab {
+      width: 100%;
+      min-height: 58px;
+      padding: 10px 8px;
+      border-radius: var(--radius-sm);
+      font-size: .98rem;
+      font-weight: 950;
+      text-align: center;
+      white-space: normal;
+    }
+
+    .method-option-desc {
+      margin: 0;
+      color: #51667d;
+      font-size: .86rem;
+      line-height: 1.45;
+    }
+
+    .method-current-desc {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-left: 4px solid var(--secondary);
+      border-radius: var(--radius-sm);
+      color: #24445e;
+      background: #eef8f6;
+      font-weight: 800;
+    }
+
+    .rate-stage {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid #d6e6f7;
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, #ffffff, #f7fbff);
+    }
+
+    .stage-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: var(--primary-strong);
+      font-weight: 950;
+    }
+
+    .sticky-panel {
+      position: sticky;
+      top: 16px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .live-chart-card {
+      margin-bottom: 10px;
+      padding: 13px;
+      border: 1px solid rgba(125, 211, 252, .30);
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #172033 0%, #251b3f 58%, #312214 100%);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, .24);
+      overflow: hidden;
+    }
+
+    .live-chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: #e0f2fe;
+      font-size: .9rem;
+      font-weight: 950;
+    }
+
+    .live-chart-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .live-chart-title .more-link {
+      color: #fbbf24;
+      font-size: .82rem;
+    }
+
+    .live-chart-total {
+      color: #fef3c7;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cost-stack {
+      display: flex;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .13);
+      overflow: hidden;
+    }
+
+    .cost-segment {
+      min-width: 2px;
+      transform-origin: left center;
+      animation: chartGrow .28s ease-out both;
+    }
+
+    .cost-segment.is-zero {
+      display: none;
+    }
+
+    .cost-principal { background: linear-gradient(135deg, #38bdf8, #2563eb); }
+    .cost-interest { background: linear-gradient(135deg, #fb7185, #e11d48); }
+    .cost-fee { background: linear-gradient(135deg, #facc15, #f59e0b); }
+
+    .live-chart-legend {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .legend-item {
+      min-width: 0;
+      color: rgba(226, 232, 240, .78);
+      font-size: .78rem;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .legend-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 auto;
+      border-radius: 999px;
+    }
+
+    .legend-value {
+      display: block;
+      margin-top: 2px;
+      color: #ffffff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .burden-mini {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, .16);
+    }
+
+    .burden-mini-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #e0f2fe;
+      font-size: .82rem;
+      font-weight: 900;
+    }
+
+    .burden-track {
+      position: relative;
+      height: 9px;
+      margin-top: 7px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(34, 197, 94, .26) 0 30%, rgba(250, 204, 21, .30) 30% 40%, rgba(251, 113, 133, .28) 40% 100%);
+      overflow: hidden;
+    }
+
+    .burden-fill {
+      width: var(--burden-width);
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #38bdf8, #facc15);
+      transition: width .24s ease-out;
+    }
+
+    @keyframes chartGrow {
+      from {
+        transform: scaleX(.04);
+        opacity: .45;
+      }
+      to {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes regionFlyInFromRight {
+      from {
+        opacity: 0;
+        transform: translateX(140px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes elasticPopIn {
+      0% {
+        opacity: 0;
+        transform: scale(.48);
+      }
+      72% {
+        opacity: 1;
+        transform: scale(1.08);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes elasticPress {
+      0% { transform: scale(1); }
+      28% { transform: scale(1.08); }
+      62% { transform: scale(.985); }
+      100% { transform: scale(1); }
+    }
+
+    .hero,
+    .layout > .panel,
+    .results {
+      animation: regionFlyInFromRight .36s cubic-bezier(.16, 1, .3, 1) both;
+    }
+
+    .layout > .panel:nth-child(1) { animation-delay: .08s; }
+    .layout > .panel:nth-child(2) { animation-delay: .16s; }
+    .results { animation-delay: .24s; }
+
+    button,
+    .back-link {
+      transform-origin: center;
+    }
+
+    button:active,
+    .back-link:active {
+      animation: elasticPress .42s cubic-bezier(.2, 1.4, .35, 1);
+    }
+
+    .metric {
+      min-height: 78px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #ffffff, #f4f9ff);
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .metric-name {
+      color: #38536e;
+      font-weight: 900;
+    }
+
+    .metric-value {
+      color: var(--primary-strong);
+      font-size: clamp(1.05rem, 2.1vw, 1.42rem);
+      font-weight: 950;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-value.blue { color: var(--info); }
+    .metric-value.green { color: var(--success); }
+    .metric-value.red { color: var(--danger); }
+    .metric-value.orange { color: var(--warning); }
+    .metric-value.pink { color: var(--accent-2); }
+
+    .metric small {
+      display: block;
+      margin-top: 5px;
+      color: var(--subtle);
+    }
+
+    .burden-reminder {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border: 1px solid rgba(245, 158, 11, .35);
+      border-radius: var(--radius-sm);
+      color: #7c3d00;
+      background: #fff7ed;
+      font-size: .9rem;
+      font-weight: 850;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 12px 13px;
+      border: 1px solid rgba(23, 105, 224, .30);
+      border-radius: var(--radius-md);
+      color: #0d4fb3;
+      background: #eef6ff;
+      font-weight: 900;
+    }
+
+    .status.ready {
+      border-color: rgba(21, 128, 61, .32);
+      color: #166534;
+      background: #ecfdf3;
+    }
+
+    .status.stale {
+      border-color: rgba(245, 158, 11, .38);
+      color: #92400e;
+      background: #fff7ed;
+    }
+
+    .error-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(220, 38, 38, .34);
+      border-radius: var(--radius-md);
+      color: #991b1b;
+      background: #fff1f2;
+      font-weight: 900;
+    }
+
+    .error-box.show {
+      display: block;
+    }
+
+    .results {
+      margin-top: 18px;
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .result-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      margin: 4px 0 12px;
+    }
+
+    .result-method {
+      color: var(--primary-strong);
+      font-weight: 950;
+    }
+
+    .result-method-name {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      margin-left: 6px;
+      padding: 5px 12px;
+      border: 1px solid rgba(236, 72, 153, .24);
+      border-radius: 999px;
+      color: #be185d;
+      background: #fdf2f8;
+      box-shadow: 0 8px 18px rgba(236, 72, 153, .12);
+      font-weight: 950;
+    }
+
+    .result-actions .button.ghost {
+      justify-self: end;
+    }
+
+    .result-more-actions {
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 980px;
+      table-layout: fixed;
+      border-collapse: collapse;
+      background: #ffffff;
+      font-size: .9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .period-col { width: 10%; }
+    .rate-col { width: 11%; }
+    .principal-col { width: 18%; }
+    .interest-col { width: 15%; }
+    .payment-col { width: 16%; }
+    .balance-col { width: 16%; }
+    .cumulative-col { width: 14%; }
+
+    th,
+    td {
+      padding: 11px 10px;
+      border-bottom: 1px solid #e5eef8;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      color: #fff;
+      background: linear-gradient(135deg, #1769e0, #0f9f8f);
+      font-size: .86rem;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fbff;
+    }
+
+    tbody tr:hover {
+      background: #eef8f6;
+    }
+
+    tfoot td {
+      color: #7c3d00;
+      background: #fff7ed;
+      font-weight: 950;
+    }
+
+    .result-footer-head th {
+      position: static;
+      top: auto;
+      z-index: auto;
+      color: #fff;
+      background: linear-gradient(135deg, #1769e0, #0f9f8f);
+      font-size: .86rem;
+      font-weight: 950;
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    .footer-note {
+      margin: 26px 0 0;
+      color: var(--subtle);
+      text-align: center;
+      font-size: .92rem;
+    }
+
+    .maker {
+      margin-top: 18px;
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .modal-scrim {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 1000;
+      padding: 16px;
+      background: rgba(15, 23, 42, .48);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-scrim.show {
+      display: flex;
+    }
+
+    .more-modal {
+      width: min(620px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(255,255,255,.65);
+      background: #fff;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, .26);
+    }
+
+    .more-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      color: #fff;
+      background: var(--title-grad);
+    }
+
+    .more-modal-head h3 {
+      font-size: 1.15rem;
+    }
+
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(255,255,255,.16);
+      font-size: 1.2rem;
+      font-weight: 950;
+    }
+
+    .more-modal-body {
+      padding: 18px;
+    }
+
+    .more-modal-body h4 {
+      margin: 14px 0 6px;
+      color: var(--primary-strong);
+      font-size: 1rem;
+    }
+
+    .more-modal-body h4:first-child {
+      margin-top: 0;
+    }
+
+    .more-modal-body p {
+      margin: 0;
+      color: #31465e;
+    }
+
+    .more-modal-body ul {
+      margin: 6px 0 0;
+      padding-left: 1.3rem;
+      color: #31465e;
+    }
+
+    .more-popover {
+      position: fixed;
+      display: none;
+      z-index: 1100;
+      width: min(420px, calc(100vw - 24px));
+      max-height: calc(100vh - 24px);
+      overflow: auto;
+      border: 1px solid rgba(23, 105, 224, .22);
+      border-radius: var(--radius-md);
+      background: #fff;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, .24);
+    }
+
+    .more-popover.show {
+      display: block;
+    }
+
+    .download-toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      min-height: 48px;
+      max-width: min(320px, calc(100vw - 32px));
+      padding: 12px 16px;
+      border: 1px solid rgba(21, 128, 61, .26);
+      border-radius: var(--radius-md);
+      color: #14532d;
+      background: linear-gradient(135deg, #ecfdf3, #dff7ea);
+      box-shadow: 0 18px 44px rgba(15, 23, 42, .18);
+      font-weight: 950;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .download-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .more-popover-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      color: #fff;
+      background: linear-gradient(135deg, #1769e0, #0f9f8f);
+    }
+
+    .more-popover-head h3 {
+      font-size: 1rem;
+    }
+
+    .popover-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,.55);
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(255,255,255,.16);
+      font-size: 1.05rem;
+      font-weight: 950;
+    }
+
+    .more-popover-body {
+      padding: 14px;
+    }
+
+    .more-popover-body h4 {
+      margin: 12px 0 5px;
+      color: var(--primary-strong);
+      font-size: .96rem;
+    }
+
+    .more-popover-body h4:first-child {
+      margin-top: 0;
+    }
+
+    .more-popover-body p {
+      margin: 0;
+      color: #31465e;
+    }
+
+    .more-popover-body ul {
+      margin: 6px 0 0;
+      padding-left: 1.25rem;
+      color: #31465e;
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sticky-panel {
+        position: static;
+        order: -1;
+      }
+
+      .summary-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 820px) {
+      .loan-type-row {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .loan-type-row .toolbar {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      .loan-segment {
+        flex: 1;
+        font-size: 1.35rem;
+      }
+
+      .method-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 20px, 1360px);
+        padding-top: 12px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 20px 16px;
+      }
+
+      .back-link {
+        width: fit-content;
+      }
+
+      .panel-header,
+      .panel-body {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .panel-title-band {
+        margin-left: -14px;
+        margin-right: -14px;
+      }
+
+      .field {
+        padding: 13px;
+      }
+
+      .field-head {
+        display: block;
+        margin: -13px -13px 13px;
+        padding: 12px 13px;
+      }
+
+      .field-desc {
+        max-width: none;
+        margin-top: 5px;
+        text-align: left;
+      }
+
+      .control-row {
+        grid-template-columns: 1fr;
+      }
+
+      .dual-row {
+        grid-template-columns: 1fr;
+      }
+
+      .number-pack {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
+      .summary-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .result-actions {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .result-actions .button.ghost {
+        justify-self: center;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .method-tabs,
+      .loan-type-row .segmented {
+        grid-template-columns: 1fr;
+      }
+
+      .loan-type-row .segmented {
+        display: grid;
+        width: 100%;
+      }
+
+      .loan-segment {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Loan repayment calculator</p>
+        <h1>貸款利率及還款金額計算機</h1>
+        <p>輸入貸款金額、年限、利率與還款方式，即時計算每期本金、利息、總還款與利息負擔。適合房貸、信貸與分段利率情境。</p>
+      </div>
+      <a class="back-link" href="https://sites.google.com/view/pkpk725/" target="_blank" rel="noopener noreferrer">回 榮生的小程式區</a>
+    </header>
+
+    <main class="layout">
+      <section class="panel" aria-labelledby="inputTitle">
+        <div class="panel-header">
+          <div class="panel-title-band">
+            <h2 id="inputTitle">貸款條件</h2>
+            <p class="note">所有金額以新台幣估算。此工具提供試算參考，實際利率、費用與攤還方式仍以銀行契約為準。</p>
+          </div>
+          <div class="loan-type-row">
+            <div class="segmented" role="tablist" aria-label="貸款類型">
+              <button class="segment loan-segment active" type="button" data-loan-type="mortgage">房屋貸款</button>
+              <button class="segment loan-segment" type="button" data-loan-type="credit">信用貸款</button>
+            </div>
+            <div class="toolbar">
+              <button class="button" id="templateBtn" type="button">載入範例</button>
+              <button class="button warning" id="clearBtn" type="button">清除資料</button>
+            </div>
+          </div>
+          <div class="error-box" id="errorBox" role="alert" tabindex="-1"></div>
+        </div>
+
+        <div class="panel-body">
+          <div class="field">
+            <div class="field-head">
+              <div>
+                <label class="label" for="amountInput">貸款金額 <span class="required">（＊必填）</span></label>
+              </div>
+              <div class="field-desc">以「萬元」輸入，右側摘要會換算為實際金額。<button class="more-link" type="button" data-more="amount">(+更多)</button></div>
+            </div>
+            <div class="control-row">
+              <input id="amountRange" type="range" min="1" max="10000" step="1" />
+              <div class="number-pack">
+                <button class="step-btn" type="button" data-step="amount" data-delta="-1" aria-label="減少貸款金額">-</button>
+                <input id="amountInput" type="number" min="1" max="10000" step="1" />
+                <button class="step-btn" type="button" data-step="amount" data-delta="1" aria-label="增加貸款金額">+</button>
+                <span class="unit">萬元</span>
+              </div>
+            </div>
+            <div class="quick-row" id="amountQuick"></div>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <div>
+                <span class="label">還款方式 <span class="required">（＊必填）</span></span>
+              </div>
+              <div class="field-desc">不同方式會影響每月負擔與總利息。<button class="more-link" type="button" data-more="method">(+更多)</button></div>
+            </div>
+            <p class="method-note">不同方式會影響每月負擔與總利息</p>
+            <div class="method-tabs" id="methodGrid" role="tablist" aria-label="還款方式"></div>
+            <div class="method-current-desc" id="methodCurrentDesc"></div>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <div>
+                <span class="label">貸款期間 <span class="required">（＊必填）</span></span>
+              </div>
+              <div class="field-desc">可用年與月組合，系統會自動換算總期數。<button class="more-link" type="button" data-more="term">(+更多)</button></div>
+            </div>
+            <div class="dual-row">
+              <div class="dual-box">
+                <span class="dual-box-title">年</span>
+                <input id="yearsRange" type="range" min="0" max="50" step="1" aria-label="貸款年數" />
+                <div class="number-pack">
+                  <button class="step-btn" type="button" data-step="years" data-delta="-1" aria-label="減少年數">-</button>
+                  <input id="yearsInput" type="number" min="0" max="50" step="1" aria-label="貸款年數" />
+                  <button class="step-btn" type="button" data-step="years" data-delta="1" aria-label="增加年數">+</button>
+                  <span class="unit">年</span>
+                </div>
+              </div>
+              <div class="dual-box">
+                <span class="dual-box-title">月</span>
+                <input id="monthsRange" type="range" min="0" max="11" step="1" aria-label="貸款月數" />
+                <div class="number-pack">
+                  <button class="step-btn" type="button" data-step="months" data-delta="-1" aria-label="減少月數">-</button>
+                  <input id="monthsInput" type="number" min="0" max="11" step="1" aria-label="貸款月數" />
+                  <button class="step-btn" type="button" data-step="months" data-delta="1" aria-label="增加月數">+</button>
+                  <span class="unit">月</span>
+                </div>
+              </div>
+            </div>
+            <div class="quick-row" id="termQuick"></div>
+            <div class="hint" id="termHint">總期數：0 期</div>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <div>
+                <span class="label">利率設定 <span class="required">（＊必填）</span></span>
+              </div>
+              <div class="field-desc">預設使用單一利率，也可切換兩段或三段年利率。<button class="more-link" type="button" data-more="rate">(+更多)</button></div>
+            </div>
+            <div class="segmented" role="tablist" aria-label="利率段數">
+              <button class="segment active" type="button" data-rate-type="1">單一利率</button>
+              <button class="segment" type="button" data-rate-type="2">兩段利率</button>
+              <button class="segment" type="button" data-rate-type="3">三段利率</button>
+            </div>
+            <div id="rateStages"></div>
+          </div>
+
+          <div class="field" id="graceField">
+            <div class="field-head">
+              <div>
+                <span class="label">寬限期</span>
+              </div>
+              <div class="field-desc">寬限期內只繳利息，不償還本金。<button class="more-link" type="button" data-more="grace">(+更多)</button></div>
+            </div>
+            <div class="dual-row">
+              <div class="dual-box">
+                <span class="dual-box-title">年</span>
+                <input id="graceYearsRange" type="range" min="0" max="5" step="1" aria-label="寬限年數" />
+                <div class="number-pack">
+                  <button class="step-btn" type="button" data-step="graceYears" data-delta="-1" aria-label="減少寬限年數">-</button>
+                  <input id="graceYearsInput" type="number" min="0" max="5" step="1" aria-label="寬限年數" />
+                  <button class="step-btn" type="button" data-step="graceYears" data-delta="1" aria-label="增加寬限年數">+</button>
+                  <span class="unit">年</span>
+                </div>
+              </div>
+              <div class="dual-box">
+                <span class="dual-box-title">月</span>
+                <input id="graceMonthsRange" type="range" min="0" max="11" step="1" aria-label="寬限月數" />
+                <div class="number-pack">
+                  <button class="step-btn" type="button" data-step="graceMonths" data-delta="-1" aria-label="減少寬限月數">-</button>
+                  <input id="graceMonthsInput" type="number" min="0" max="11" step="1" aria-label="寬限月數" />
+                  <button class="step-btn" type="button" data-step="graceMonths" data-delta="1" aria-label="增加寬限月數">+</button>
+                  <span class="unit">月</span>
+                </div>
+              </div>
+            </div>
+            <div class="quick-row" id="graceQuick"></div>
+          </div>
+
+          <div class="field" id="fixedField">
+            <div class="field-head">
+              <div>
+                <label class="label" for="fixedInput">每期定額攤還本金</label>
+              </div>
+              <div class="field-desc">用於定額攤還部分本金，輸入 0 或留空時，依貸款本金的 3% 試算。<button class="more-link" type="button" data-more="fixed">(+更多)</button></div>
+            </div>
+            <div class="control-row">
+              <input id="fixedRange" type="range" min="0" max="10000000" step="1" />
+              <div class="number-pack">
+                <button class="step-btn" type="button" data-step="fixed" data-delta="-1000" aria-label="減少每期定額攤還本金">-</button>
+                <input id="fixedInput" type="number" min="0" max="10000000" step="1" />
+                <button class="step-btn" type="button" data-step="fixed" data-delta="1000" aria-label="增加每期定額攤還本金">+</button>
+                <span class="unit">元</span>
+              </div>
+            </div>
+            <div class="quick-row" id="fixedQuick"></div>
+            <div class="hint" id="fixedHint"></div>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <div>
+                <label class="label" for="incomeInput">月收入</label>
+              </div>
+              <div class="field-desc">用於估算每月收入負擔比。<button class="more-link" type="button" data-more="income">(+更多)</button></div>
+            </div>
+            <div class="control-row">
+              <input id="incomeRange" type="range" min="0" max="2000000" step="1" />
+              <div class="number-pack">
+                <button class="step-btn" type="button" data-step="income" data-delta="-1000" aria-label="減少月收入">-</button>
+                <input id="incomeInput" type="number" min="0" max="2000000" step="1" />
+                <button class="step-btn" type="button" data-step="income" data-delta="1000" aria-label="增加月收入">+</button>
+                <span class="unit">元</span>
+              </div>
+            </div>
+            <div class="quick-row" id="incomeQuick"></div>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <div>
+                <label class="label" for="feeInput">其他一次性費用</label>
+              </div>
+              <div class="field-desc">可填入開辦費、帳管費、代辦費等。<button class="more-link" type="button" data-more="fee">(+更多)</button></div>
+            </div>
+            <div class="control-row">
+              <input id="feeRange" type="range" min="0" max="5000000" step="1" />
+              <div class="number-pack">
+                <button class="step-btn" type="button" data-step="fee" data-delta="-1000" aria-label="減少費用">-</button>
+                <input id="feeInput" type="number" min="0" max="5000000" step="1" />
+                <button class="step-btn" type="button" data-step="fee" data-delta="1000" aria-label="增加費用">+</button>
+                <span class="unit">元</span>
+              </div>
+            </div>
+            <div class="quick-row" id="feeQuick"></div>
+          </div>
+
+          <div class="toolbar calc-toolbar">
+            <button class="button primary" id="calcBtn" type="button">開始計算</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel sticky-panel" aria-labelledby="summaryTitle">
+        <div class="panel-header">
+          <div class="panel-title-band">
+            <h2 id="summaryTitle">即時摘要</h2>
+            <p class="note">調整條件後請重新計算，以更新明細表。</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="live-chart-card" id="liveChart" aria-label="即時摘要視覺化圖表"></div>
+          <div class="metric-grid" id="liveMetrics"></div>
+          <div class="status" id="resultStatus">尚未計算，請確認條件後按「開始計算」。</div>
+        </div>
+      </aside>
+    </main>
+
+    <section class="panel results" aria-labelledby="resultTitle">
+      <div class="panel-header">
+        <div class="panel-title-band">
+          <h2 id="resultTitle">試算結果</h2>
+          <p class="note">預設顯示前 24 期，可用 48 期為單位顯示、補回或取消前後期數。</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="summary-strip" id="resultSummary"></div>
+        <div class="result-actions">
+          <div class="result-method" id="currentMethodLabel">目前還款方式：<span class="result-method-name">本息平均攤還</span></div>
+          <button class="button" id="show24Btn" type="button">顯示前 24 期</button>
+          <button class="button ghost" id="exportBtn" type="button">匯出 CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <colgroup>
+              <col class="period-col" />
+              <col class="rate-col" />
+              <col class="principal-col" />
+              <col class="interest-col" />
+              <col class="payment-col" />
+              <col class="balance-col" />
+              <col class="cumulative-col" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>期數</th>
+                <th>年利率</th>
+                <th>每期償還本金</th>
+                <th>每期償還利息</th>
+                <th>每期償還本利和</th>
+                <th>尚欠本金餘額</th>
+                <th>累計利息</th>
+              </tr>
+            </thead>
+            <tbody id="resultRows"></tbody>
+            <tfoot id="resultFoot"></tfoot>
+          </table>
+        </div>
+        <div class="result-more-actions" id="resultMoreActions"></div>
+      </div>
+    </section>
+
+    <p class="footer-note">本工具僅供估算，不構成貸款建議或銀行核貸承諾。</p>
+    <p class="footer-note maker">彭榮生 製作</p>
+  </div>
+
+  <div class="modal-scrim" id="moreModal" role="dialog" aria-modal="true" aria-labelledby="moreModalTitle">
+    <div class="more-modal">
+      <div class="more-modal-head">
+        <h3 id="moreModalTitle">更多說明</h3>
+        <button class="modal-close" id="modalCloseBtn" type="button" aria-label="關閉更多說明">×</button>
+      </div>
+      <div class="more-modal-body" id="moreModalBody"></div>
+    </div>
+  </div>
+
+  <div class="more-popover" id="morePopover" role="dialog" aria-modal="false" aria-labelledby="morePopoverTitle">
+    <div class="more-popover-head">
+      <h3 id="morePopoverTitle">更多說明</h3>
+      <button class="popover-close" id="popoverCloseBtn" type="button" aria-label="關閉更多說明">×</button>
+    </div>
+    <div class="more-popover-body" id="morePopoverBody"></div>
+  </div>
+
+  <div class="download-toast" id="downloadToast" role="status" aria-live="polite" aria-atomic="true">已下載CSV</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const money = new Intl.NumberFormat("zh-TW", { style: "currency", currency: "TWD", maximumFractionDigits: 0 });
+    const number = new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 0 });
+    const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    function canAnimate() {
+      return !reduceMotionQuery.matches && typeof Element.prototype.animate === "function";
+    }
+
+    function hasGsap() {
+      return Boolean(window.gsap);
+    }
+
+    function getMotionTargets(target) {
+      if (!target) return [];
+      if (typeof target === "string") return Array.from(document.querySelectorAll(target));
+      if (target instanceof Element) return [target];
+      return Array.from(target).filter((item) => item instanceof Element);
+    }
+
+    function setupRegionFlyIn() {
+      if (!canAnimate()) return;
+      const regions = hasGsap() ? gsap.utils.toArray(".hero, .layout > .panel, .results") : getMotionTargets(".hero, .layout > .panel, .results");
+      if (!regions.length) return;
+      if (hasGsap()) {
+        gsap.set(regions, { autoAlpha: 0, x: 140 });
+      } else {
+        regions.forEach((region) => {
+          region.style.opacity = "0";
+          region.style.transform = "translateX(140px)";
+        });
+      }
+
+      const flyIn = (target, delay = 0) => {
+        if (hasGsap()) {
+          gsap.to(target, {
+            autoAlpha: 1,
+            x: 0,
+            duration: .34,
+            delay,
+            ease: "power4.out",
+            clearProps: "transform,opacity,visibility"
+          });
+          return;
+        }
+
+        window.setTimeout(() => {
+          const animation = target.animate([
+            { opacity: 0, transform: "translateX(140px)" },
+            { opacity: 1, transform: "translateX(0)" }
+          ], { duration: 340, easing: "cubic-bezier(.16, 1, .3, 1)", fill: "forwards" });
+          animation.finished.then(() => {
+            target.style.opacity = "";
+            target.style.transform = "";
+            animation.cancel();
+          }).catch(() => {});
+        }, delay * 1000);
+      };
+
+      if (!("IntersectionObserver" in window)) {
+        regions.forEach((region, index) => flyIn(region, index * .08));
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
+          .forEach((entry, index) => {
+            observer.unobserve(entry.target);
+            flyIn(entry.target, index * .08);
+          });
+      }, { threshold: .18, rootMargin: "0px 0px -8% 0px" });
+
+      regions.forEach((region) => observer.observe(region));
+
+      window.setTimeout(() => {
+        regions.forEach((region) => {
+          const style = window.getComputedStyle(region);
+          if (Number(style.opacity) < .1) flyIn(region);
+        });
+      }, 1000);
+    }
+
+    function animateElasticButton(element) {
+      if (!canAnimate() || !element) return;
+      if (hasGsap()) {
+        gsap.timeline({ defaults: { overwrite: "auto" } })
+          .to(element, { scale: 1.08, duration: .08, ease: "power1.out" })
+          .to(element, { scale: 1, duration: .38, ease: "elastic.out(1, .42)", clearProps: "transform" });
+        return;
+      }
+      element.animate([
+        { transform: "scale(1)" },
+        { transform: "scale(1.08)", offset: .22 },
+        { transform: "scale(.985)", offset: .58 },
+        { transform: "scale(1)" }
+      ], { duration: 420, easing: "cubic-bezier(.2, 1.4, .35, 1)", fill: "none" });
+    }
+
+    const config = {
+      mortgage: {
+        template: {
+          amountWan: 1200,
+          years: 30,
+          months: 0,
+          rateType: 1,
+          stages: [
+            { start: 1, end: 360, rate: 2.45 },
+            { start: 1, end: 12, rate: 2.10 },
+            { start: 13, end: 360, rate: 2.45 }
+          ],
+          income: 42000,
+          fee: 25000
+        },
+        amountQuick: [250, 500, 800, 1200, 1500],
+        termQuick: [10, 20, 30, 40],
+        feeQuick: [10000, 20000, 30000, 50000],
+        rateQuick: [1.85, 2.10, 2.30, 2.45, 2.70]
+      },
+      credit: {
+        template: {
+          amountWan: 100,
+          years: 7,
+          months: 0,
+          rateType: 1,
+          stages: [
+            { start: 1, end: 84, rate: 6.80 },
+            { start: 1, end: 6, rate: 11.99 },
+            { start: 7, end: 84, rate: 14.99 }
+          ],
+          income: 42000,
+          fee: 9000
+        },
+        amountQuick: [30, 50, 100, 150, 250],
+        termQuick: [3, 5, 7],
+        feeQuick: [3000, 5000, 8000, 12000],
+        rateQuick: [1.99, 3.99, 6.99, 9.99, 12.99]
+      }
+    };
+
+    const methods = {
+      equalPayment: {
+        name: "本息平均攤還",
+        desc: "每期本利和大致固定，前期利息占比高，後期本金占比高。"
+      },
+      equalPrincipal: {
+        name: "本金平均攤還",
+        desc: "每期償還固定本金，前期月付較高，總利息通常較低。"
+      },
+      interestOnly: {
+        name: "到期還本",
+        desc: "每期先繳利息，最後一期一次償還全部本金。"
+      },
+      fixedPrincipal: {
+        name: "定額攤還部分本金",
+        desc: "每期依設定金額攤還部分本金，再加上當期利息。"
+      }
+    };
+
+    const moreContent = {
+      intro: {
+        title: "工具用途",
+        detail: "這個工具把貸款本金、期間、利率、還款方式與費用放在同一張試算表中，幫你快速看出每月壓力、總利息與累計還款變化。",
+        example: "例如貸款 1,200 萬、30 年、年利率 2.45%，選擇本息平均攤還後，可以看到每期本利和、剩餘本金與累計利息。",
+        notes: ["試算結果是估算值，不等同銀行正式報價。", "實際扣款仍可能受到寬限期、指數利率、手續費與銀行規則影響。"]
+      },
+      contract: {
+        title: "試算限制",
+        detail: "銀行契約可能包含浮動利率、違約金、帳管費或提前清償規則，這些條件會讓實際成本與試算不同。",
+        example: "若銀行另收 6,000 元開辦費，可填在其他一次性費用，APR 會把它納入年化成本估算。",
+        notes: ["簽約前請以銀行提供的還款明細與契約條款為準。", "分段利率請依銀行公告的適用期數輸入。"]
+      },
+      amount: {
+        title: "貸款金額",
+        detail: "貸款金額以萬元輸入，系統會自動乘以 10,000 作為本金計算。",
+        example: "輸入 1200 代表本金為 12,000,000 元。",
+        notes: ["金額越高，利息與月付額通常越高。", "若只想比較不同方案，可用相同金額切換利率與還款方式。"]
+      },
+      term: {
+        title: "貸款期間",
+        detail: "貸款期間由年與月合併計算，總期數等於年數乘以 12 再加月數。",
+        example: "20 年 6 個月會換算成 246 期。",
+        notes: ["期間越長，每月負擔通常較低，但總利息可能增加。", "期間不能為 0，否則無法產生還款表。"]
+      },
+      method: {
+        title: "還款方式",
+        detail: "四種方式會改變本金償還速度，因此每月負擔、總利息與剩餘本金走勢都不同。",
+        example: "本息平均適合想穩定月付；本金平均前期較高但利息較省；到期還本適合模擬只付息最後還本金；定額攤還部分本金可自訂每期還本金額。",
+        notes: ["到期還本最後一期會加入全部本金，該期金額會明顯變大。", "定額攤還部分本金若設定太低，可能不會在原期間內完全還清。"]
+      },
+      rate: {
+        title: "利率設定",
+        detail: "單一利率適合整段期間同一利率；兩段或三段利率適合優惠利率、階段式利率或預估未來調整。",
+        example: "信用貸款前 6 期 1.99%、第 7 期後 6.80%，可使用兩段利率。",
+        notes: ["每段至少有 1 期，各段連續且互不重疊。", "最後一段會自動延伸到貸款總期數。"]
+      },
+      grace: {
+        title: "寬限期",
+        detail: "寬限期只用在本息平均攤還與本金平均攤還。寬限期內只繳利息，不償還本金。",
+        example: "貸款 30 年、寬限 2 年，前 24 期只繳利息，第 25 期開始攤還本金。",
+        notes: ["寬限期會降低前期月付，但總利息通常增加。", "寬限期必須小於總貸款期間。"]
+      },
+      fixed: {
+        title: "每期定額攤還本金",
+        detail: "用於定額攤還部分本金，系統會以你填寫的本金金額加上當期利息作為每期應繳。",
+        example: "本金 100 萬，每期定額攤還本金 30,000 元，第一期會繳 30,000 元加上當期利息。",
+        notes: ["未填或填 0 時，系統以貸款金額的 3% 預估。", "若定額本金高於剩餘本金，最後一期只會償還剩餘本金。"]
+      },
+      income: {
+        title: "月收入與負擔比",
+        detail: "月收入用來估算每月收入負擔比，幫你判斷月付額相對收入是否過高。",
+        example: "月收入 60,000 元、平均月付 18,000 元，負擔比為 30%。",
+        notes: ["低負擔：月收入 30% 以下。", "偏高：月收入 30% 到 40%。", "高壓力：月收入 40% 以上。"]
+      },
+      fee: {
+        title: "其他一次性費用",
+        detail: "此欄可填開辦費、帳管費、代辦費或其他一次性成本，會納入總費用與 APR 估算。",
+        example: "貸款撥款時另收 3,000 元，可填入 3000。",
+        notes: ["費用不會分攤到每期還款表，但會影響總成本與 APR。", "若沒有費用可填 0。"]
+      },
+      summary: {
+        title: "即時摘要",
+        detail: "摘要會依目前表單條件即時估算，讓你在正式計算前先看總本金、總利息、平均月付與收入負擔。",
+        example: "切換還款方式後，平均月付與總利息會立即更新；按開始計算後，明細表才會同步更新。",
+        notes: ["若明細狀態顯示條件已變更，請重新按開始計算。", "APR 是以費用與現金流估算的年化成本。"]
+      },
+      summaryPrincipal: {
+        title: "貸款金額(總本金)",
+        detail: "這是你實際借入、需要分期償還的本金總額。表單用「萬元」輸入，摘要會自動換算成新台幣元。",
+        example: "輸入 1200 萬元時，總本金就是 12,000,000 元；之後所有利息、月付與總還款都會以這個本金為基礎。",
+        notes: ["本金越高，月付額與總利息通常越高。", "比較不同銀行方案時，建議先固定同一個本金再切換利率與還款方式。"]
+      },
+      summaryInterest: {
+        title: "貸款利息(總利息)",
+        detail: "這是整段貸款期間預估會付給銀行的利息總和，不包含本金，也不包含開辦費等一次性費用。",
+        example: "若總還款為 15,000,000 元、本金為 12,000,000 元，總利息約為 3,000,000 元。",
+        notes: ["期間越長或利率越高，總利息通常越高。", "本金平均攤還常見情況下總利息較低，但前期月付較高。"]
+      },
+      summaryPayment: {
+        title: "總還款金額(本+利)",
+        detail: "這是整段期間預估繳出去的本金加利息總額，可用來看這筆貸款最後大約會還多少錢。",
+        example: "本金 12,000,000 元、總利息 3,000,000 元，總還款金額就是 15,000,000 元。",
+        notes: ["這個數字不含其他一次性費用。", "若要看含費用的總成本，請參考試算結果中的總成本。"]
+      },
+      summaryApr: {
+        title: "總費用年百分率(APR)",
+        detail: "APR 會把一次性費用一起納入，換算成類似年利率的成本指標，方便比較不同貸款方案。",
+        example: "兩個方案名目利率相同，但其中一個多收開辦費，APR 通常會比較高。",
+        notes: ["以扣除一次性費用後的撥款金額與每期還款求得月報酬率，再以複利換算為年率。", "若期末仍有未償本金，APR 假設在到期時一併結清。"]
+      },
+      summaryInterestPercent: {
+        title: "預估全部利息總和百分比",
+        detail: "這是用總利息除以總本金得到的比例，表示整段貸款下來，利息約占本金的幾成。",
+        example: "本金 1,000 萬、總利息 250 萬，比例就是 25%。",
+        notes: ["這不是年利率，而是整段貸款期間的累積利息比例。", "貸款期間越長，這個比例通常越高。"]
+      },
+      summaryPeriods: {
+        title: "總共期數",
+        detail: "總期數是把貸款年數與月數換算成每月還款的期數，也是還款明細表會產生的列數。",
+        example: "30 年貸款等於 360 期；20 年 6 個月等於 246 期。",
+        notes: ["期數越多，每期負擔通常越低，但總利息可能增加。", "若總期數為 0，系統無法產生試算表。"]
+      },
+      summaryFirstPayment: {
+        title: "每月還款額(首期)",
+        detail: "這是還款明細第 1 期預估要繳的金額，包含第 1 期償還本金與第 1 期利息。",
+        example: "若第 1 期償還本金 20,000 元、利息 8,000 元，首期還款額就是 28,000 元。",
+        notes: ["首期金額不一定代表之後每一期都相同。", "本金平均攤還、分段利率或寬限期設定，都可能讓首期與平均月付差很多。"]
+      },
+      summaryAveragePayment: {
+        title: "每月還款額(平均)",
+        detail: "這是把整段貸款的總還款除以總期數得到的平均值，用來快速估算每月壓力。",
+        example: "總還款 1,200,000 元、共 60 期，平均每月約 20,000 元。",
+        notes: ["平均值不一定等於每一期實際金額。", "本金平均攤還、到期還本與定額攤還部分本金的每期金額可能差異很大。"]
+      },
+      summaryBurden: {
+        title: "每月收入負擔比",
+        detail: "這是用平均月付除以月收入得到的比例，幫你判斷還款壓力是否偏高。",
+        example: "月收入 60,000 元、平均月付 18,000 元，負擔比為 30%。",
+        notes: ["一般可把 30% 以下視為較低負擔，30% 到 40% 視為偏高。", "若收入不穩定，建議保留更高的現金緩衝。"]
+      },
+      methodEqualPayment: {
+        title: "本息平均攤還",
+        detail: "每期繳的本利和大致固定。前期大多在繳利息，後期本金占比會逐漸增加，適合想讓月付穩定的人。",
+        example: "房貸 1,200 萬、30 年、年利率 2.45%，每月金額大致相近，方便安排固定支出。",
+        notes: ["前期本金下降較慢，提前清償時要留意剩餘本金。", "若利率分段變動，每期金額仍可能跟著變化。"]
+      },
+      methodEqualPrincipal: {
+        title: "本金平均攤還",
+        detail: "每期償還固定本金，再加上當期利息。因為本金越還越少，所以月付通常會逐期下降。",
+        example: "貸款 120 萬、分 120 期，每期固定還本金 1 萬元，再加上當期剩餘本金產生的利息。",
+        notes: ["前期月付通常較高，要確認現金流能承受。", "常見情況下總利息會比本息平均攤還少。"]
+      },
+      methodInterestOnly: {
+        title: "到期還本",
+        detail: "期間內先繳利息，不償還本金，最後一期一次還清全部本金。它常用來模擬短期資金週轉或特殊貸款情境。",
+        example: "借 100 萬、年利率 3%，前面每期只繳利息，最後一期會同時繳最後一期利息與 100 萬本金。",
+        notes: ["最後一期金額會非常大，必須事先準備還本資金。", "因本金長時間未下降，總利息通常不低。"]
+      },
+      methodFixedPrincipal: {
+        title: "定額攤還部分本金",
+        detail: "你可以自己指定每期要還多少本金，系統再加上當期利息，形成每期應繳金額。",
+        example: "本金 100 萬，每期指定還本金 30,000 元，第一期會繳 30,000 元加上第一期利息。",
+        notes: ["若每期指定本金太低，可能無法在原期間內完全還清。", "若指定本金高於剩餘本金，最後一期只會償還剩餘本金。"]
+      },
+      results: {
+        title: "試算結果",
+        detail: "結果表預設顯示前 24 期，可用 48 期為單位往後增加、往前補回，或裁掉目前畫面上方與下方的期數。",
+        example: "30 年房貸共有 360 期，先看前 24 期；需要更多資料時按「顯示後48期」，若要縮小範圍可按「取消前48期」或「取消後48期」。",
+        notes: ["匯出 CSV 會匯出全部期數，不受目前畫面顯示期數限制。", "表格最下方的全部期數總計會一直以完整期數計算。"]
+      }
+    };
+
+    const state = {
+      loanType: "mortgage",
+      method: "equalPayment",
+      amountWan: 1200,
+      years: 30,
+      months: 0,
+      rateType: 1,
+      stages: [],
+      graceYears: 0,
+      graceMonths: 0,
+      fixedPrincipal: 0,
+      fixedPercentChoice: 3,
+      income: 42000,
+      fee: 25000,
+      lastResults: null,
+      hasCalculated: false,
+      visibleStart: 0,
+      visibleRows: 24
+    };
+
+    function clamp(value, min, max) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return min;
+      return Math.min(Math.max(parsed, min), max);
+    }
+
+    function principal() {
+      return Math.round(state.amountWan * 10000);
+    }
+
+    function totalMonths() {
+      return Math.max(0, Math.round(state.years * 12 + state.months));
+    }
+
+    function graceMonths() {
+      return Math.max(0, Math.round(state.graceYears * 12 + state.graceMonths));
+    }
+
+    function stageCount() {
+      return Math.min(state.rateType, Math.max(totalMonths(), 1));
+    }
+
+    function normalizeStages() {
+      const total = Math.max(totalMonths(), 1);
+      const count = stageCount();
+      state.rateType = count;
+      const fallbackRate = config[state.loanType].template.stages[0].rate;
+      let start = 1;
+      state.stages = Array.from({ length: count }, (_, index) => {
+        const current = state.stages[index];
+        const maxEnd = total - (count - index - 1);
+        const defaultEnd = Math.floor(total * (index + 1) / count);
+        const end = index === count - 1 ? total
+          : Math.round(clamp(current?.end ?? defaultEnd, start, maxEnd));
+        const stage = { start, end, rate: current?.rate ?? fallbackRate };
+        start = end + 1;
+        return stage;
+      });
+      return state.stages;
+    }
+
+    function monthlyPayment(balance, monthlyRate, periods) {
+      if (monthlyRate === 0) return balance / periods;
+      return balance * monthlyRate / -Math.expm1(-periods * Math.log1p(monthlyRate));
+    }
+
+    function estimateApr(netLoan, rows, remainingBalance) {
+      if (netLoan <= 0 || !rows.length) return null;
+      const maturity = rows[rows.length - 1].period;
+      const presentValue = (discount) => rows.reduce(
+        (sum, row) => sum + row.payment * discount ** row.period,
+        remainingBalance * discount ** maturity
+      );
+      if (presentValue(1) - netLoan <= netLoan * 1e-12) return 0;
+
+      // Search over the monthly discount factor, allowing monthly rates above 100%.
+      let low = 0;
+      let high = 1;
+      for (let i = 0; i < 80; i += 1) {
+        const mid = (low + high) / 2;
+        if (presentValue(mid) < netLoan) low = mid;
+        else high = mid;
+      }
+      return Math.expm1(-12 * Math.log((low + high) / 2)) * 100;
+    }
+
+    function fixedPrincipalAmount() {
+      return state.fixedPercentChoice === null
+        ? state.fixedPrincipal
+        : Math.round(principal() * state.fixedPercentChoice / 100);
+    }
+
+    function burdenText(burden) {
+      if (state.income <= 0) return "未填月收入，無法判斷負擔";
+      if (burden < 30) return "低負擔";
+      if (burden < 40) return "偏高";
+      return "高壓力";
+    }
+
+    function calculate() {
+      const months = totalMonths();
+      const loan = principal();
+      const grace = graceMonths();
+      const stages = normalizeStages();
+      const getRateForPeriod = (period) => stages.find((stage) => period <= stage.end).rate;
+      let balance = loan;
+      let cumulativeInterest = 0;
+      let totalPayment = 0;
+      const rows = [];
+
+      if (state.method === "interestOnly") {
+        for (let period = 1; period <= months; period += 1) {
+          const rate = getRateForPeriod(period);
+          const interest = balance * (rate / 100 / 12);
+          const paidPrincipal = period === months ? balance : 0;
+          const payment = paidPrincipal + interest;
+          balance = Math.max(0, balance - paidPrincipal);
+          cumulativeInterest += interest;
+          totalPayment += payment;
+          rows.push({ period, rate, principal: paidPrincipal, interest, payment, balance, cumulativeInterest });
+        }
+      } else if (state.method === "equalPrincipal") {
+        const repayMonths = months - grace;
+        const basePrincipal = repayMonths > 0 ? loan / repayMonths : loan;
+        for (let period = 1; period <= months; period += 1) {
+          const rate = getRateForPeriod(period);
+          const interest = balance * (rate / 100 / 12);
+          const paidPrincipal = period <= grace ? 0 : period === months ? balance : Math.min(basePrincipal, balance);
+          const payment = paidPrincipal + interest;
+          balance = Math.max(0, balance - paidPrincipal);
+          cumulativeInterest += interest;
+          totalPayment += payment;
+          rows.push({ period, rate, principal: paidPrincipal, interest, payment, balance, cumulativeInterest });
+        }
+      } else if (state.method === "fixedPrincipal") {
+        const fixed = fixedPrincipalAmount();
+        for (let period = 1; period <= months && balance > 0; period += 1) {
+          const rate = getRateForPeriod(period);
+          const interest = balance * (rate / 100 / 12);
+          const paidPrincipal = Math.min(fixed, balance);
+          const payment = paidPrincipal + interest;
+          balance = Math.max(0, balance - paidPrincipal);
+          cumulativeInterest += interest;
+          totalPayment += payment;
+          rows.push({ period, rate, principal: paidPrincipal, interest, payment, balance, cumulativeInterest });
+        }
+      } else {
+        let scheduledPayment = 0;
+        let lastRate = null;
+        for (let period = 1; period <= months; period += 1) {
+          const rate = getRateForPeriod(period);
+          const monthlyRate = rate / 100 / 12;
+          const interest = balance * monthlyRate;
+          let paidPrincipal = 0;
+
+          if (period <= grace) {
+            scheduledPayment = interest;
+          } else {
+            const remaining = months - period + 1;
+            if (scheduledPayment <= 0 || rate !== lastRate || period === grace + 1) {
+              scheduledPayment = monthlyPayment(balance, monthlyRate, remaining);
+            }
+            paidPrincipal = period === months ? balance : Math.min(Math.max(scheduledPayment - interest, 0), balance);
+          }
+
+          const payment = paidPrincipal + interest;
+          balance = Math.max(0, balance - paidPrincipal);
+          cumulativeInterest += interest;
+          totalPayment += payment;
+          lastRate = rate;
+          rows.push({ period, rate, principal: paidPrincipal, interest, payment, balance, cumulativeInterest });
+        }
+      }
+
+      const maxPayment = rows.reduce((max, row) => Math.max(max, row.payment), 0);
+      const averagePayment = rows.length ? totalPayment / rows.length : 0;
+      const totalCost = totalPayment + balance + state.fee;
+      const burden = state.income > 0 ? averagePayment / state.income * 100 : 0;
+      const apr = estimateApr(loan - state.fee, rows, balance);
+      const interestPercent = loan > 0 ? cumulativeInterest / loan * 100 : 0;
+
+      return {
+        rows,
+        totalPrincipal: loan,
+        totalInterest: cumulativeInterest,
+        totalPayment,
+        totalCost,
+        remainingBalance: balance,
+        method: state.method,
+        firstPayment: rows[0]?.payment || 0,
+        maxPayment,
+        averagePayment,
+        burden,
+        apr,
+        interestPercent
+      };
+    }
+
+    function renderQuickButtons(id, values, formatter, callback) {
+      const target = $(id);
+      if (!target) return;
+      target.innerHTML = values.map((value) => `<button class="chip" type="button" data-value="${value}">${formatter(value)}</button>`).join("");
+      target.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => callback(Number(button.dataset.value)));
+      });
+    }
+
+    function moreButton(key, tone = "pink") {
+      return `<button class="more-link" type="button" data-more="${key}" data-float-more="true" data-more-tone="${tone}">(+更多)</button>`;
+    }
+
+    function liveCostChartMoreContent() {
+      const live = calculate();
+      const fee = Math.max(0, Number(state.fee || 0));
+      const totalCost = live.totalCost;
+      const principalPct = live.totalPrincipal / totalCost * 100;
+      const interestPct = live.totalInterest / totalCost * 100;
+      const feePct = fee / totalCost * 100;
+      const burdenTextValue = state.income > 0 ? `${live.burden.toFixed(1)}%` : "未填月收入";
+
+      return {
+        title: "成本比例預覽",
+        compact: true,
+        detail: `此圖即時顯示總成本 ${money.format(live.totalCost)} 的組成：本金 ${principalPct.toFixed(1)}%、利息 ${interestPct.toFixed(1)}%、一次性費用 ${feePct.toFixed(1)}%。下方負擔比目前為 ${burdenTextValue}。`,
+        notes: [
+          "重點看橘色利息比例與負擔比；比例越高，代表長期成本或每月壓力越需要留意。",
+          "數字會跟著金額、年限、利率、還款方式、收入與費用即時更新。",
+          "總成本包括全額本金、表列利息及一次性費用，包含期末仍未償還的本金。",
+          "負擔比是平均月付估算，實際壓力仍應搭配下方明細表判斷。"
+        ]
+      };
+    }
+
+    function getMoreContent(key) {
+      if (key === "liveCostChart") return liveCostChartMoreContent();
+      return moreContent[key];
+    }
+
+    function renderMethods() {
+      const methodMoreKeys = {
+        equalPayment: "methodEqualPayment",
+        equalPrincipal: "methodEqualPrincipal",
+        interestOnly: "methodInterestOnly",
+        fixedPrincipal: "methodFixedPrincipal"
+      };
+      const methodTones = {
+        equalPayment: "blue",
+        equalPrincipal: "green",
+        interestOnly: "orange",
+        fixedPrincipal: "pink"
+      };
+
+      $("methodGrid").innerHTML = Object.entries(methods).map(([key, item]) => `
+        <div class="method-option">
+          <button class="method-tab ${state.method === key ? "active" : ""}" type="button" data-method="${key}" role="tab" aria-selected="${state.method === key}">
+            ${item.name}
+          </button>
+          <p class="method-option-desc">${item.desc}${moreButton(methodMoreKeys[key], methodTones[key])}</p>
+        </div>
+      `).join("");
+
+      $("methodCurrentDesc").textContent = methods[state.method].desc;
+
+      $("methodGrid").querySelectorAll(".method-tab").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.method = button.dataset.method;
+          state.hasCalculated = false;
+          state.visibleStart = 0;
+          state.visibleRows = 24;
+          renderAll();
+        });
+      });
+    }
+
+    function renderRateStages(source) {
+      const stages = normalizeStages();
+      const container = $("rateStages");
+      const layout = `${state.loanType}-${stages.length}`;
+      if (container.dataset.layout !== layout) {
+        buildRateStages(container, stages);
+        container.dataset.layout = layout;
+      }
+
+      const total = totalMonths();
+      stages.forEach((stage, index) => {
+        container.querySelector(`[data-stage-label="${index}"]`).textContent = total
+          ? `第 ${stage.start} 至 ${stage.end} 期` : "請先設定貸款期間";
+        const maxEnd = Math.max(total, 1) - (stages.length - index - 1);
+        for (const endInput of container.querySelectorAll(`[data-stage-end="${index}"], [data-stage-end-input="${index}"]`)) {
+          endInput.min = stage.start;
+          endInput.max = maxEnd;
+          if (endInput !== source) endInput.value = stage.end;
+        }
+        const rateInput = container.querySelector(`[data-stage-rate="${index}"]`);
+        if (rateInput !== source) rateInput.value = stage.rate.toFixed(3);
+        container.querySelector(`[data-stage-rate-range="${index}"]`).value = stage.rate;
+      });
+
+      document.querySelectorAll("[data-rate-type]").forEach((button) => {
+        const count = Number(button.dataset.rateType);
+        button.classList.toggle("active", count === stages.length);
+        button.disabled = count > Math.max(total, 1);
+      });
+    }
+
+    function buildRateStages(container, stages) {
+      const rateQuick = config[state.loanType].rateQuick;
+      container.innerHTML = stages.map((stage, index) => `
+        <div class="rate-stage">
+          <div class="stage-title">
+            <span>第 ${index + 1} 段利率</span>
+            <span data-stage-label="${index}"></span>
+          </div>
+          <div class="dual-row">
+            <div class="dual-box">
+              <span class="dual-box-title">期</span>
+              <input type="range" min="${stage.start}" max="${Math.max(stage.start, totalMonths())}" step="1" value="${stage.end}" data-stage-end="${index}" aria-label="第 ${index + 1} 段結束期數" ${index === stages.length - 1 ? "disabled" : ""} />
+              <div class="number-pack">
+                <span class="unit">至</span>
+                <input type="number" min="${stage.start}" max="${Math.max(stage.start, totalMonths())}" step="1" value="${stage.end}" data-stage-end-input="${index}" aria-label="第 ${index + 1} 段結束期數" ${index === stages.length - 1 ? "readonly" : ""} />
+                <span class="unit">期</span>
+              </div>
+            </div>
+            <div class="dual-box">
+              <span class="dual-box-title">%</span>
+              <input type="range" min="0" max="20" step="0.001" value="${stage.rate}" data-stage-rate-range="${index}" aria-label="第 ${index + 1} 段年利率" />
+              <div class="number-pack">
+                <button class="step-btn" type="button" data-stage-rate-step="${index}" data-delta="-0.001" aria-label="降低第 ${index + 1} 段利率">-</button>
+                <input type="number" min="0" max="20" step="0.001" value="${Number(stage.rate).toFixed(3)}" data-stage-rate="${index}" aria-label="第 ${index + 1} 段年利率" />
+                <button class="step-btn" type="button" data-stage-rate-step="${index}" data-delta="0.001" aria-label="提高第 ${index + 1} 段利率">+</button>
+                <span class="unit">%</span>
+              </div>
+            </div>
+          </div>
+          <div class="quick-row">
+            ${rateQuick.map((rate) => `<button class="chip" type="button" data-rate-pick="${index}" data-value="${rate}">${rate}%</button>`).join("")}
+          </div>
+        </div>
+      `).join("");
+
+      const updateStage = (input, value) => {
+        const { stageEnd, stageEndInput, stageRate, stageRateRange } = input.dataset;
+        if (stageEnd !== undefined || stageEndInput !== undefined) {
+          const index = Number(stageEnd ?? stageEndInput);
+          state.stages[index].end = Math.round(clamp(value, Number(input.min), Number(input.max)));
+        } else {
+          const index = Number(stageRate ?? stageRateRange);
+          state.stages[index].rate = roundRate(value);
+        }
+        state.hasCalculated = false;
+        renderAll(input);
+      };
+
+      container.querySelectorAll('input[type="range"]:not(:disabled)').forEach((input) => {
+        input.addEventListener("input", () => updateStage(input, input.valueAsNumber));
+      });
+      container.querySelectorAll('input[type="number"]:not([readonly])').forEach((input) => {
+        const formatted = () => input.dataset.stageEndInput !== undefined
+          ? state.stages[Number(input.dataset.stageEndInput)].end
+          : state.stages[Number(input.dataset.stageRate)].rate.toFixed(3);
+        bindNumberEdit(input, (value) => updateStage(input, value), formatted);
+      });
+
+      container.querySelectorAll("[data-stage-rate-step], [data-rate-pick]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const index = Number(button.dataset.stageRateStep ?? button.dataset.ratePick);
+          state.stages[index].rate = roundRate(button.dataset.value ?? (state.stages[index].rate + Number(button.dataset.delta)));
+          state.hasCalculated = false;
+          renderAll();
+        });
+      });
+    }
+
+    function roundRate(rate) {
+      return Math.round(clamp(rate, 0, 20) * 1000) / 1000;
+    }
+
+    function renderLiveChart(live) {
+      const fee = Math.max(0, Number(state.fee || 0));
+      const totalCost = live.totalCost;
+      const principalPct = live.totalPrincipal / totalCost * 100;
+      const interestPct = live.totalInterest / totalCost * 100;
+      const feePct = fee / totalCost * 100;
+      const burdenWidth = state.income > 0 ? Math.min(Math.max(live.burden, 0), 100) : 0;
+      const burdenLabel = state.income > 0 ? `${live.burden.toFixed(1)}%` : "未填月收入";
+
+      $("liveChart").innerHTML = `
+        <div class="live-chart-head">
+          <span class="live-chart-title">總成本預覽${moreButton("liveCostChart", "pink")}</span>
+          <span class="live-chart-total">${money.format(live.totalCost)}</span>
+        </div>
+        <div class="cost-stack" role="img" aria-label="本金 ${principalPct.toFixed(1)}%，利息 ${interestPct.toFixed(1)}%，費用 ${feePct.toFixed(1)}%">
+          <span class="cost-segment cost-principal ${principalPct <= 0 ? "is-zero" : ""}" style="flex-basis:${principalPct}%"></span>
+          <span class="cost-segment cost-interest ${interestPct <= 0 ? "is-zero" : ""}" style="flex-basis:${interestPct}%"></span>
+          <span class="cost-segment cost-fee ${feePct <= 0 ? "is-zero" : ""}" style="flex-basis:${feePct}%"></span>
+        </div>
+        <div class="live-chart-legend">
+          <div class="legend-item">
+            <span class="legend-label"><span class="legend-dot cost-principal"></span>本金</span>
+            <span class="legend-value">${principalPct.toFixed(1)}%</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-label"><span class="legend-dot cost-interest"></span>利息</span>
+            <span class="legend-value">${interestPct.toFixed(1)}%</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-label"><span class="legend-dot cost-fee"></span>費用</span>
+            <span class="legend-value">${feePct.toFixed(1)}%</span>
+          </div>
+        </div>
+        <div class="burden-mini">
+          <div class="burden-mini-row">
+            <span>月收入負擔比</span>
+            <span>${burdenLabel}</span>
+          </div>
+          <div class="burden-track" aria-hidden="true">
+            <div class="burden-fill" style="--burden-width:${burdenWidth}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLiveMetrics() {
+      const months = totalMonths();
+      const messages = validationMessages();
+      if (messages.length) {
+        $("liveChart").textContent = messages.join(" ");
+        $("liveMetrics").innerHTML = "";
+      } else {
+        renderValidLiveMetrics(calculate(), months);
+      }
+
+      $("resultStatus").className = "status" + (state.hasCalculated ? " ready" : state.lastResults ? " stale" : "");
+      $("resultStatus").textContent = state.hasCalculated
+        ? "結果已更新。"
+        : state.lastResults
+          ? "條件已變更，下方為上次試算結果。請重新計算以更新明細。"
+          : "尚未計算，請確認條件後按「開始計算」。";
+    }
+
+    function renderValidLiveMetrics(live, months) {
+      const burdenClass = live.burden >= 40 ? "red" : live.burden >= 30 ? "orange" : "green";
+      renderLiveChart(live);
+      $("liveMetrics").innerHTML = `
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">貸款金額(總本金)</span><span class="metric-value">${money.format(live.totalPrincipal)}</span></div>
+          <small>${state.amountWan.toLocaleString("zh-TW")} 萬元${moreButton("summaryPrincipal", "blue")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">貸款利息(總利息)</span><span class="metric-value orange">${money.format(live.totalInterest)}</span></div>
+          <small>依目前利率與還款方式估算${moreButton("summaryInterest", "orange")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">總還款金額(本+利)</span><span class="metric-value">${money.format(live.totalPayment)}</span></div>
+          <small>不含其他一次性費用${moreButton("summaryPayment", "green")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">總費用年百分率(APR)</span><span class="metric-value pink">${live.apr === null ? "無法估算" : live.apr.toFixed(2) + "%"}</span></div>
+          <small>${live.remainingBalance > 0 ? "假設期末結清剩餘本金" : "含一次性費用的年化估算"}${moreButton("summaryApr", "pink")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">預估全部利息總和百分比(各年總和)</span><span class="metric-value blue">${live.interestPercent.toFixed(2)}%</span></div>
+          <small>總利息 ÷ 總本金${moreButton("summaryInterestPercent", "teal")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">總共期數</span><span class="metric-value blue">${number.format(months)} 期</span></div>
+          <small>${state.years} 年 ${state.months} 月${moreButton("summaryPeriods", "blue")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">每月還款額(首期)</span><span class="metric-value blue">${money.format(live.firstPayment)}</span></div>
+          <small>第 1 期本利和${moreButton("summaryFirstPayment", "blue")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">每月還款額(平均)</span><span class="metric-value">${money.format(live.averagePayment)}</span></div>
+          <small>全部期數平均，不代表每期固定${moreButton("summaryAveragePayment", "green")}</small>
+        </div>
+        ${live.remainingBalance > 0 ? `
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">期末未償本金</span><span class="metric-value orange">${money.format(live.remainingBalance)}</span></div>
+          <small>尚未列入本利還款合計</small>
+        </div>` : ""}
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">每月收入負擔比</span><span class="metric-value ${burdenClass}">${state.income > 0 ? live.burden.toFixed(1) + "%" : "未填"}</span></div>
+          <small>以月收入 ${state.income > 0 ? money.format(state.income) : "未填"} 計算${moreButton("summaryBurden", "red")}</small>
+          <div class="burden-reminder">負擔提醒：${burdenText(live.burden)}。低負擔：低於 30%，偏高：30% 至未滿 40%，高壓力：40% 以上。</div>
+        </div>
+      `;
+
+    }
+
+    function renderResults() {
+      const data = state.lastResults;
+      const empty = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">尚未產生試算結果</td></tr>`;
+      $("currentMethodLabel").innerHTML = `${data ? (state.hasCalculated ? "試算還款方式" : "上次試算還款方式") : "目前還款方式"}：<span class="result-method-name">${methods[data?.method ?? state.method].name}</span>`;
+      if (!data) {
+        $("resultSummary").innerHTML = "";
+        $("resultRows").innerHTML = empty;
+        $("resultFoot").innerHTML = "";
+        $("resultMoreActions").innerHTML = "";
+        return;
+      }
+
+      state.visibleStart = clamp(state.visibleStart || 0, 0, Math.max(data.rows.length - 1, 0));
+      state.visibleRows = clamp(state.visibleRows || 24, 1, data.rows.length);
+      if (state.visibleStart + state.visibleRows > data.rows.length) {
+        state.visibleStart = Math.max(0, data.rows.length - state.visibleRows);
+      }
+
+      const visibleStart = state.visibleStart;
+      const visibleEnd = Math.min(data.rows.length, visibleStart + state.visibleRows);
+      const visibleRows = visibleEnd - visibleStart;
+      $("resultSummary").innerHTML = `
+        ${data.remainingBalance > 0 ? `
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">期末未償本金</span><span class="metric-value orange">${money.format(data.remainingBalance)}</span></div>
+          <small>尚未列入本利還款合計</small>
+        </div>` : ""}
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">貸款利息(總利息)</span><span class="metric-value orange">${money.format(data.totalInterest)}</span></div>
+          <small>不含本金與一次性費用${moreButton("summaryInterest", "orange")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">總還款金額(本+利)</span><span class="metric-value">${money.format(data.totalPayment)}</span></div>
+          <small>本金加利息${moreButton("summaryPayment", "green")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">每月還款額(平均)</span><span class="metric-value green">${money.format(data.averagePayment)}</span></div>
+          <small>總還款 ÷ 總期數${moreButton("summaryAveragePayment", "teal")}</small>
+        </div>
+        <div class="metric">
+          <div class="metric-row"><span class="metric-name">目前顯示</span><span class="metric-value blue">第 ${number.format(visibleStart + 1)}-${number.format(visibleEnd)} 期</span></div>
+          <small>共 ${number.format(visibleRows)} / ${number.format(data.rows.length)} 期，${methods[data.method].name}</small>
+        </div>
+      `;
+
+      const rows = data.rows.slice(visibleStart, visibleEnd);
+      $("resultRows").innerHTML = rows.map((row) => `
+        <tr>
+          <td>第 ${row.period} 期</td>
+          <td>${row.rate.toFixed(3)}%</td>
+          <td>${money.format(row.principal)}</td>
+          <td>${money.format(row.interest)}</td>
+          <td>${money.format(row.payment)}</td>
+          <td>${money.format(row.balance)}</td>
+          <td>${money.format(row.cumulativeInterest)}</td>
+        </tr>
+      `).join("");
+
+      const averageRate = data.rows.length
+        ? data.rows.reduce((sum, row) => sum + row.rate, 0) / data.rows.length
+        : 0;
+
+      $("resultFoot").innerHTML = `
+        <tr class="result-footer-head" aria-label="底部欄位標題">
+          <th>期數</th>
+          <th>年利率</th>
+          <th>每期償還本金</th>
+          <th>每期償還利息</th>
+          <th>每期償還本利和</th>
+          <th>尚欠本金餘額</th>
+          <th>累計利息</th>
+        </tr>
+        <tr>
+          <td>全部期數總計</td>
+          <td>${averageRate.toFixed(3)}%(平均)</td>
+          <td>${money.format(data.totalPrincipal - data.remainingBalance)}</td>
+          <td>${money.format(data.totalInterest)}</td>
+          <td>${money.format(data.totalPayment)}</td>
+          <td>${money.format(data.remainingBalance)}</td>
+          <td>${money.format(data.totalInterest)}</td>
+        </tr>
+      `;
+
+      const actions = [];
+      if (visibleEnd < data.rows.length) {
+        actions.push(`<button class="button" type="button" data-visible-action="add-after">顯示後48期</button>`);
+      }
+      if (visibleRows > 48) {
+        actions.push(`<button class="button warning" type="button" data-visible-action="remove-before">取消前48期</button>`);
+      }
+      if (visibleRows > 48) {
+        actions.push(`<button class="button warning" type="button" data-visible-action="remove-after">取消後48期</button>`);
+      }
+      if (visibleStart > 0) {
+        actions.push(`<button class="button" type="button" data-visible-action="add-before">顯示前48期</button>`);
+      }
+      $("resultMoreActions").innerHTML = actions.join("");
+      $("resultMoreActions").querySelectorAll("[data-visible-action]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const action = button.dataset.visibleAction;
+          if (action === "add-after") {
+            state.visibleRows = Math.min(data.rows.length - state.visibleStart, state.visibleRows + 48);
+          }
+          if (action === "remove-before") {
+            const removed = Math.min(48, state.visibleRows - 1);
+            state.visibleStart += removed;
+            state.visibleRows -= removed;
+          }
+          if (action === "remove-after") {
+            state.visibleRows = Math.max(1, state.visibleRows - 48);
+          }
+          if (action === "add-before") {
+            const added = Math.min(48, state.visibleStart);
+            state.visibleStart -= added;
+            state.visibleRows += added;
+          }
+          renderResults();
+        });
+      });
+    }
+
+    function syncInputs(source) {
+      const fixed = fixedPrincipalAmount();
+      const pairs = [
+        ["amount", state.amountWan],
+        ["years", state.years],
+        ["months", state.months],
+        ["graceYears", state.graceYears],
+        ["graceMonths", state.graceMonths],
+        ["fixed", fixed],
+        ["income", Math.round(state.income)],
+        ["fee", Math.round(state.fee)]
+      ];
+
+      pairs.forEach(([key, value]) => {
+        const range = $(key + "Range");
+        const input = $(key + "Input");
+        if (range) range.value = value;
+        if (input && input !== source) input.value = value;
+      });
+
+      $("termHint").textContent = `總期數：${number.format(totalMonths())} 期`;
+      $("fixedHint").textContent = `目前約為貸款本金的 ${(fixed / principal() * 100).toFixed(2)}%。`;
+
+      document.querySelectorAll("[data-loan-type]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.loanType === state.loanType);
+      });
+
+      $("graceField").classList.toggle("hide", !["equalPayment", "equalPrincipal"].includes(state.method));
+      $("fixedField").classList.toggle("hide", state.method !== "fixedPrincipal");
+    }
+
+    function renderAll(source) {
+      clearError();
+      const cfg = config[state.loanType];
+      renderQuickButtons("amountQuick", cfg.amountQuick, (v) => `${v} 萬`, (v) => {
+        state.amountWan = v;
+        state.hasCalculated = false;
+        renderAll();
+      });
+      renderQuickButtons("termQuick", cfg.termQuick, (v) => `${v} 年`, (v) => {
+        state.years = v;
+        state.months = 0;
+        state.hasCalculated = false;
+        renderAll();
+      });
+      renderQuickButtons("graceQuick", [0, 1, 2, 3], (v) => {
+        return v === 0 ? "無寬限" : `${v} 年`;
+      }, (v) => {
+        state.graceYears = v;
+        state.graceMonths = 0;
+        state.hasCalculated = false;
+        renderAll();
+      });
+      renderQuickButtons("fixedQuick", [1, 2, 3, 5, 10], (v) => `${v}% 本金`, (v) => {
+        state.fixedPercentChoice = v;
+        state.hasCalculated = false;
+        renderAll();
+      });
+      renderQuickButtons("incomeQuick", [35000, 45000, 55000, 70000], (v) => money.format(v), (v) => {
+        state.income = v;
+        state.hasCalculated = false;
+        renderAll();
+      });
+      renderQuickButtons("feeQuick", cfg.feeQuick, (v) => money.format(v), (v) => {
+        state.fee = v;
+        state.hasCalculated = false;
+        renderAll();
+      });
+
+      renderMethods();
+      syncInputs(source);
+      renderRateStages(source);
+      renderLiveMetrics();
+      renderResults();
+    }
+
+    function splitStages() {
+      const total = Math.max(totalMonths(), 1);
+      const cfgStages = config[state.loanType].template.stages;
+      state.stages = Array.from({ length: stageCount() }, (_, index) => ({
+        start: index === 0 ? 1 : Math.floor(total * index / stageCount()) + 1,
+        end: index === stageCount() - 1 ? total : Math.floor(total * (index + 1) / stageCount()),
+        rate: state.stages[index]?.rate ?? cfgStages[index]?.rate ?? cfgStages[cfgStages.length - 1].rate
+      }));
+      normalizeStages();
+    }
+
+    function loadTemplate(type = state.loanType) {
+      const template = config[type].template;
+      state.loanType = type;
+      state.method = "equalPayment";
+      state.amountWan = template.amountWan;
+      state.years = template.years;
+      state.months = template.months;
+      state.rateType = template.rateType;
+      state.stages = [{ ...template.stages[0] }];
+      state.graceYears = 0;
+      state.graceMonths = 0;
+      state.fixedPercentChoice = 3;
+      state.fixedPrincipal = 0;
+      state.income = template.income;
+      state.fee = template.fee;
+      state.lastResults = null;
+      state.hasCalculated = false;
+      state.visibleStart = 0;
+      state.visibleRows = 24;
+      renderAll();
+    }
+
+    function clearData() {
+      state.amountWan = 1;
+      state.years = 0;
+      state.months = 0;
+      state.method = "equalPayment";
+      state.rateType = 1;
+      state.stages = [{ start: 1, end: 1, rate: 0 }];
+      state.graceYears = 0;
+      state.graceMonths = 0;
+      state.fixedPrincipal = 0;
+      state.fixedPercentChoice = 3;
+      state.income = 0;
+      state.fee = 0;
+      state.lastResults = null;
+      state.hasCalculated = false;
+      state.visibleStart = 0;
+      state.visibleRows = 24;
+      renderAll();
+    }
+
+    function showError(message) {
+      $("errorBox").textContent = message;
+      $("errorBox").classList.add("show");
+      $("errorBox").focus();
+    }
+
+    function clearError() {
+      $("errorBox").textContent = "";
+      $("errorBox").classList.remove("show");
+    }
+
+    function validationMessages() {
+      const messages = [];
+      if (totalMonths() <= 0) messages.push("請輸入有效的貸款期間。");
+      if (state.fee >= principal()) messages.push("一次性費用必須小於貸款本金，撥款淨額才會大於 0。");
+      if (totalMonths() > 0 && graceMonths() >= totalMonths()
+          && ["equalPayment", "equalPrincipal"].includes(state.method)) {
+        messages.push("寬限期必須小於貸款期間。");
+      }
+      return messages;
+    }
+
+    function validate() {
+      const messages = validationMessages();
+      if (messages.length) {
+        showError(messages.join(" "));
+        return false;
+      }
+      clearError();
+      return true;
+    }
+
+    function exportCSV() {
+      if (!state.lastResults || !state.hasCalculated) {
+        showError("請先按「開始計算」產生最新結果，再匯出 CSV。");
+        return;
+      }
+
+      const lines = [
+        ["期數", "年利率", "每期償還本金", "每期償還利息", "每期償還本利和", "尚欠本金餘額", "累計利息"].join(",")
+      ];
+
+      state.lastResults.rows.forEach((row) => {
+        lines.push([
+          row.period,
+          row.rate.toFixed(3) + "%",
+          Math.round(row.principal),
+          Math.round(row.interest),
+          Math.round(row.payment),
+          Math.round(row.balance),
+          Math.round(row.cumulativeInterest)
+        ].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","));
+      });
+
+      lines.push("");
+      lines.push(["全部期數總計", ""].join(","));
+      lines.push(["試算還款方式", methods[state.lastResults.method].name].join(","));
+      lines.push(["貸款金額(總本金)", Math.round(state.lastResults.totalPrincipal)].join(","));
+      lines.push(["貸款利息(總利息)", Math.round(state.lastResults.totalInterest)].join(","));
+      lines.push(["總還款金額(本+利)", Math.round(state.lastResults.totalPayment)].join(","));
+      lines.push(["期末未償本金", Math.round(state.lastResults.remainingBalance)].join(","));
+      lines.push(["總費用年百分率(APR)", state.lastResults.apr === null ? "無法估算" : state.lastResults.apr.toFixed(2) + "%"].join(","));
+      if (state.lastResults.remainingBalance > 0) {
+        lines.push("APR 假設期末結清剩餘本金");
+      }
+
+      const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      const date = new Date();
+      const stamp = [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+        .map((part) => String(part).padStart(2, "0")).join("-");
+      link.download = `貸款試算_${stamp}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showDownloadToast();
+    }
+
+    let downloadToastTimer = null;
+
+    function showDownloadToast() {
+      const toast = $("downloadToast");
+      if (!toast) return;
+      toast.classList.add("show");
+      window.clearTimeout(downloadToastTimer);
+      downloadToastTimer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2400);
+    }
+
+    function bindNumberEdit(input, update, formatted, emptyValue = null) {
+      input.addEventListener("input", () => {
+        if (input.validity.badInput) return;
+        const value = input.value === "" ? emptyValue : input.valueAsNumber;
+        if (Number.isFinite(value)) update(value);
+      });
+      input.addEventListener("blur", () => {
+        input.value = formatted();
+      });
+    }
+
+    function bindInput(key) {
+      const input = $(key + "Input");
+      const range = $(key + "Range");
+      const stateKey = { amount: "amountWan", fixed: "fixedPrincipal" }[key] ?? key;
+      const current = () => key === "fixed" ? fixedPrincipalAmount() : state[stateKey];
+      const update = (value, source) => {
+        state[stateKey] = Math.round(clamp(value, Number(input.min), Number(input.max)));
+        if (key === "fixed") state.fixedPercentChoice = state.fixedPrincipal === 0 ? 3 : null;
+        state.hasCalculated = false;
+        renderAll(source);
+      };
+
+      range.addEventListener("input", () => update(range.valueAsNumber, range));
+      bindNumberEdit(input, (value) => update(value, input), current, key === "amount" ? null : 0);
+      document.querySelectorAll(`[data-step="${key}"]`).forEach((button) => {
+        button.addEventListener("click", () => update(current() + Number(button.dataset.delta)));
+      });
+    }
+
+    function moreBodyHtml(content) {
+      if (content.compact) {
+        return `
+          <h4>解釋說明</h4>
+          <p>${content.detail}</p>
+          <h4>注意事項</h4>
+          <ul>${content.notes.map((item) => `<li>${item}</li>`).join("")}</ul>
+        `;
+      }
+
+      return `
+        <h4>詳細說明</h4>
+        <p>${content.detail}</p>
+        <h4>簡易範例</h4>
+        <p>${content.example}</p>
+        <h4>注意事項</h4>
+        <ul>${content.notes.map((item) => `<li>${item}</li>`).join("")}</ul>
+      `;
+    }
+
+    function positionPopover(anchor) {
+      const popover = $("morePopover");
+      const margin = 12;
+      const rect = anchor.getBoundingClientRect();
+      const popoverRect = popover.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      let left = rect.left;
+      let top = rect.bottom + 8;
+
+      if (top + popoverRect.height > viewportHeight - margin) {
+        top = rect.top - popoverRect.height - 8;
+      }
+
+      left = Math.min(Math.max(margin, left), viewportWidth - popoverRect.width - margin);
+      top = Math.min(Math.max(margin, top), viewportHeight - popoverRect.height - margin);
+
+      popover.style.left = `${left}px`;
+      popover.style.top = `${top}px`;
+    }
+
+    let activeHelp = null;
+
+    function openMore(key, trigger) {
+      const content = getMoreContent(key);
+      if (!content) return;
+      closeHelp(true, false);
+
+      const isPopover = trigger.dataset.floatMore === "true";
+      const panel = $(isPopover ? "morePopover" : "moreModal");
+      const target = isPopover ? panel : panel.querySelector(".more-modal");
+      const closeButton = $(isPopover ? "popoverCloseBtn" : "modalCloseBtn");
+      const page = document.querySelector(".page");
+      $(isPopover ? "morePopoverTitle" : "moreModalTitle").textContent = content.title;
+      $(isPopover ? "morePopoverBody" : "moreModalBody").innerHTML = moreBodyHtml(content);
+
+      const help = { panel, target, trigger, closeButton, page, isPopover, animation: null, closing: false };
+      activeHelp = help;
+      panel.classList.add("show");
+      if (isPopover) positionPopover(trigger);
+      else page.inert = true;
+      closeButton.focus({ preventScroll: true });
+
+      if (canAnimate()) {
+        const transformOrigin = isPopover ? "top left" : "center";
+        help.animation = target.animate([
+          { opacity: 0, transform: "scale(.48)", transformOrigin },
+          { opacity: 1, transform: "scale(1.08)", transformOrigin, offset: .72 },
+          { opacity: 1, transform: "scale(1)", transformOrigin }
+        ], { duration: 440, easing: "cubic-bezier(.2, 1.45, .35, 1)" });
+      }
+    }
+
+    function closeHelp(immediate = false, restoreFocus = true) {
+      const help = activeHelp;
+      if (!help || (help.closing && !immediate)) return;
+      const finish = () => {
+        const focusInPanel = help.panel.contains(document.activeElement);
+        help.panel.classList.remove("show");
+        help.animation?.cancel();
+        if (!help.isPopover) help.page.inert = false;
+        if (restoreFocus && focusInPanel) help.trigger.focus({ preventScroll: true });
+        activeHelp = null;
+      };
+
+      help.animation?.cancel();
+      if (immediate || !canAnimate()) {
+        finish();
+        return;
+      }
+      help.closing = true;
+      help.animation = help.target.animate([
+        { opacity: 1, transform: "scale(1)" },
+        { opacity: 0, transform: "scale(.5)" }
+      ], { duration: 240, easing: "ease-in", fill: "forwards" });
+      help.animation.finished.then(finish, () => {});
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      ["amount", "years", "months", "graceYears", "graceMonths", "fixed", "income", "fee"].forEach(bindInput);
+
+      document.querySelectorAll("[data-loan-type]").forEach((button) => {
+        button.addEventListener("click", () => loadTemplate(button.dataset.loanType));
+      });
+
+      document.querySelectorAll("[data-rate-type]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const count = Number(button.dataset.rateType);
+          if (count === state.rateType) return;
+          state.rateType = count;
+          splitStages();
+          state.hasCalculated = false;
+          renderAll();
+        });
+      });
+
+      document.addEventListener("click", (event) => {
+        const buttonTarget = event.target.closest("button, .back-link");
+        if (buttonTarget) animateElasticButton(buttonTarget);
+
+        const moreTrigger = event.target.closest("[data-more]");
+        if (moreTrigger) {
+          event.preventDefault();
+          event.stopPropagation();
+          openMore(moreTrigger.dataset.more, moreTrigger);
+          return;
+        }
+        if (activeHelp?.isPopover && !activeHelp.panel.contains(event.target)) closeHelp();
+      });
+      $("modalCloseBtn").addEventListener("click", () => closeHelp());
+      $("popoverCloseBtn").addEventListener("click", () => closeHelp());
+      $("moreModal").addEventListener("click", (event) => {
+        if (event.target === $("moreModal")) closeHelp();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (!activeHelp) return;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeHelp();
+        } else if (event.key === "Tab" && !activeHelp.isPopover) {
+          event.preventDefault();
+          activeHelp.closeButton.focus();
+        }
+      });
+
+      $("templateBtn").addEventListener("click", () => loadTemplate(state.loanType));
+      $("clearBtn").addEventListener("click", clearData);
+      $("calcBtn").addEventListener("click", () => {
+        if (!validate()) return;
+        state.lastResults = calculate();
+        state.hasCalculated = true;
+        state.visibleStart = 0;
+        state.visibleRows = 24;
+        renderAll();
+        document.querySelector(".results").scrollIntoView({ behavior: canAnimate() ? "smooth" : "auto", block: "start" });
+      });
+      $("exportBtn").addEventListener("click", exportCSV);
+      $("show24Btn").addEventListener("click", () => {
+        state.visibleStart = 0;
+        state.visibleRows = 24;
+        renderResults();
+      });
+
+      loadTemplate("mortgage");
+      setupRegionFlyIn();
+    });
+  </script>
+</body>
+</html>
