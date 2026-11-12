@@ -1,1 +1,1982 @@
-515611515615
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>台灣股票當沖投資損益模擬計算機</title>
+  <style>
+    :root{
+      --bg:#0b1120;
+      --panel:#151b2e;
+      --panel-2:#1b223a;
+      --panel-3:#232b49;
+      --text:#eef2ff;
+      --muted:#a4adbf;
+      --line:rgba(255,255,255,.08);
+      --line-strong:rgba(255,255,255,.13);
+      --shadow:0 24px 60px rgba(0,0,0,.45);
+      --shadow-soft:0 14px 30px rgba(0,0,0,.28);
+      --radius:24px;
+      --radius-sm:16px;
+      --green:#48d38a;
+      --red:#ff6b6b;
+      --yellow:#ffd84d;
+      --accent:#68a6ff;
+      --accent-2:#7c5cff;
+      --accent-3:#ff8d42;
+      --notice:#fff1bf;
+      --notice-border:#f0d66d;
+      --header-grad:linear-gradient(135deg, #172345 0%, #2a2856 52%, #181d31 100%);
+      --button-grad:linear-gradient(135deg, #5b8cff 0%, #7e63ff 52%, #f3a14a 100%);
+      --button-grad-2:linear-gradient(135deg, #1d6cff 0%, #4b83ff 60%, #6be4c8 100%);
+      --button-grad-yellow:linear-gradient(135deg, #ffdb59 0%, #ffb93c 100%);
+      --bg-glow:radial-gradient(circle at top left, rgba(104,166,255,.20), transparent 34%), radial-gradient(circle at top right, rgba(255,141,66,.12), transparent 28%), radial-gradient(circle at bottom center, rgba(124,92,255,.16), transparent 36%);
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      background:
+        radial-gradient(circle at top left, rgba(104,166,255,.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(255,216,77,.06), transparent 24%),
+        var(--bg-glow),
+        var(--bg);
+      color:var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height:1.55;
+      min-height:100vh;
+    }
+
+    .app{
+      width:min(1500px, calc(100% - 24px));
+      margin:0 auto;
+      padding:16px 0 24px;
+    }
+
+    .hero{
+      border-radius:30px;
+      background:var(--header-grad);
+      border:1px solid rgba(255,255,255,.09);
+      box-shadow:var(--shadow);
+      padding:22px 22px 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero::after{
+      content:"";
+      position:absolute;
+      inset:auto -20% -55% auto;
+      width:420px;height:420px;
+      background:radial-gradient(circle, rgba(255,216,77,.16), transparent 60%);
+      pointer-events:none;
+    }
+    .hero-top{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:18px;
+      flex-wrap:wrap;
+    }
+
+    .hero-top{
+      position:relative;
+      z-index:1;
+    }
+    .hero-actions{
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-end;
+      flex:0 0 auto;
+      margin-left:auto;
+      max-width:100%;
+    }
+
+
+
+    .title-wrap{min-width:280px; flex:1}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 12px;border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color:#d9deea;
+      font-size:.88rem;
+      margin-bottom:10px;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.9rem, 3vw, 3.1rem);
+      line-height:1.08;
+      color:var(--yellow);
+      letter-spacing:.01em;
+      text-shadow:0 2px 16px rgba(255,216,77,.14);
+    }
+    .subtitle{
+      margin:10px 0 0;
+      color:#d2d8e6;
+      max-width:980px;
+      font-size:.98rem;
+    }
+    .hero-pills{
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center;
+    }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 13px;border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color:#f1f5ff;
+      white-space:nowrap;
+      font-size:.92rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(340px, 1fr) minmax(0, 2fr);
+      gap:18px;
+      align-items:start;
+      margin-top:18px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(22,29,49,.98), rgba(14,18,31,.98));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-soft);
+      overflow:hidden;
+    }
+    .card-header{
+      padding:16px 18px 14px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .card-title{
+      margin:0;
+      font-size:1.05rem;
+      line-height:1.2;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .card-subtitle{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:.88rem;
+    }
+    .card-body{padding:16px 18px 18px}
+
+    .section{margin-bottom:14px}
+    .section:last-child{margin-bottom:0}
+    .section-label{
+      display:flex;align-items:center;gap:8px;
+      margin:0 0 10px;
+      font-size:.94rem;
+      font-weight:800;
+      color:#edf2ff;
+    }
+    .help{
+      color:var(--muted);
+      font-size:.82rem;
+      line-height:1.62;
+      margin-top:8px;
+    }
+
+    .segment{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:8px;
+      background:rgba(255,255,255,.04);
+      padding:8px;
+      border-radius:18px;
+      border:1px solid var(--line);
+    }
+    .segment.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .segment button{
+      border:0;
+      border-radius:14px;
+      padding:12px 10px;
+      background:transparent;
+      color:#d7deee;
+      cursor:pointer;
+      font-weight:800;
+      transition:transform .18s ease, background .18s ease, box-shadow .18s ease, color .18s ease;
+    }
+    .segment button:hover{transform:translateY(-1px)}
+    .segment button.active{
+      background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(236,240,255,.92));
+      color:#13203a;
+      box-shadow:0 10px 20px rgba(0,0,0,.16);
+    }
+
+    .tax-chips{
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;
+    }
+    .tax-chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 12px;border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.035);
+      color:#cbd3e6;
+      font-size:.9rem;
+      transition:transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .tax-chip.active{
+      color:#4c3a00;
+      border-color:rgba(255,216,77,.45);
+      background:linear-gradient(135deg, rgba(255,216,77,.98), rgba(255,185,60,.96));
+      box-shadow:0 0 0 1px rgba(255,216,77,.10) inset, 0 12px 24px rgba(0,0,0,.18);
+    }
+    .tax-chip.active strong{color:#5c3f00}
+
+    .field{
+      background:rgba(255,255,255,.035);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:12px;
+      margin-bottom:12px;
+    }
+    .field-head{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+      margin-bottom:8px;
+    }
+    .field label{
+      font-size:.92rem;
+      font-weight:800;
+      color:#f0f4ff;
+    }
+    .field-note{
+      font-size:.78rem;
+      color:var(--muted);
+      text-align:right;
+      white-space:nowrap;
+    }
+    .control-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 44px;
+      gap:8px;
+      align-items:stretch;
+    }
+
+    .num-input,
+    .select-input{
+      width:100%;
+      min-height:48px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.09);
+      background:#0f1116;
+      color:var(--text);
+      outline:none;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+      transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+      font-size:1rem;
+    }
+    .num-input:focus,
+    .select-input:focus{
+      border-color:rgba(255,216,77,.52);
+      box-shadow:0 0 0 4px rgba(255,216,77,.09);
+    }
+    .num-input{
+      appearance:textfield;
+      -moz-appearance:textfield;
+      padding-right:12px;
+    }
+    .num-input::-webkit-outer-spin-button,
+    .num-input::-webkit-inner-spin-button{ -webkit-appearance: none; margin:0; }
+
+    .stepper{
+      display:flex;
+      flex-direction:column;
+      width:44px;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.09);
+      background:#101218;
+    }
+    .step-btn{
+      flex:1;
+      border:0;
+      background:transparent;
+      color:#dce4fb;
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      user-select:none;
+      min-height:22px;
+      transition:transform .16s ease, background .16s ease, color .16s ease;
+    }
+    .step-btn:hover{background:rgba(255,255,255,.06); color:#fff}
+    .step-btn:active{transform:scale(.98)}
+    .step-btn.top{border-bottom:1px solid rgba(255,255,255,.08)}
+    .step-btn svg{width:14px;height:14px}
+
+    .row-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+
+    .compact-box{
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      padding:12px;
+    }
+    .compact-head{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    .compact-head .label{
+      font-weight:800;
+      color:#f0f4ff;
+      font-size:.92rem;
+    }
+    .compact-head .note{
+      font-size:.78rem;
+      color:var(--muted);
+    }
+
+    .quick-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .quick-btn{
+      border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.04);
+      color:#e6ebf7;
+      border-radius:999px;
+      padding:8px 11px;
+      font-size:.86rem;
+      cursor:pointer;
+      transition:transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+    .quick-btn:hover{transform:translateY(-1px)}
+    .quick-btn.active{
+      background:linear-gradient(135deg, rgba(255,216,77,.18), rgba(104,166,255,.16));
+      border-color:rgba(255,216,77,.32);
+      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      color:#fff;
+    }
+
+    .status-box{
+      border-radius:18px;
+      border:1px solid rgba(255,216,77,.24);
+      padding:14px 15px;
+      background:linear-gradient(180deg, rgba(255,241,191,.14), rgba(255,241,191,.08));
+      color:#f7f0c2;
+      line-height:1.65;
+      font-size:.9rem;
+    }
+
+    .notice-box{
+      border-radius:18px;
+      border:1px solid var(--notice-border);
+      padding:14px 15px;
+      background:linear-gradient(180deg, rgba(255,241,191,.98), rgba(255,234,162,.96));
+      color:#4c3a00;
+      line-height:1.7;
+      font-size:.9rem;
+      box-shadow:0 12px 24px rgba(0,0,0,.15);
+    }
+    .target-example{
+      background:linear-gradient(180deg, rgba(255,249,214,.98), rgba(255,238,168,.96));
+      border-color:#e5c95f;
+    }
+    .target-example strong{color:#7a5800}
+    .scenario-footer .line + .line{margin-top:6px}
+    .scenario-footer .line{color:var(--muted); font-size:.82rem; line-height:1.55}
+    .scenario-footer .line strong{color:#fff}
+    .scenario-wrap table{min-width:860px}
+    .scenario-wrap colgroup col:nth-child(1){width:8%}
+    .scenario-wrap colgroup col:nth-child(2){width:13%}
+    .scenario-wrap colgroup col:nth-child(3){width:13%}
+    .scenario-wrap colgroup col:nth-child(4){width:10%}
+    .scenario-wrap colgroup col:nth-child(5){width:17%}
+    .scenario-wrap colgroup col:nth-child(6){width:31%}
+    .scenario-wrap colgroup col:nth-child(7){width:8%}
+    .scenario-wrap th,
+    .scenario-wrap td{
+      text-align:center;
+      vertical-align:middle;
+      font-size:.93rem;
+    }
+    .scenario-wrap th{
+      font-size:.95rem;
+      padding:11px 6px;
+    }
+    .scenario-wrap td{
+      padding:10px 6px;
+    }
+    .scenario-wrap .scenario-num,
+    .scenario-wrap .scenario-fixed,
+    .scenario-wrap .scenario-btn{
+      font-size:1rem;
+      font-weight:900;
+    }
+    .scenario-wrap .scenario-fixed{
+      justify-content:center;
+    }
+
+    .result-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+      gap:12px;
+    }
+    .metric{
+      border-radius:20px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      padding:14px 14px 13px;
+      min-height:98px;
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+      max-width:100%;
+    }
+    .metric:hover{
+      transform:translateY(-1px);
+      border-color:rgba(255,255,255,.15);
+      box-shadow:0 12px 24px rgba(0,0,0,.16);
+    }
+    .metric-head{
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+      margin-bottom:10px;
+      color:#dce3f6;
+      font-size:.84rem;
+      font-weight:800;
+    }
+    .metric-value{
+      font-size:clamp(1.02rem, 1.5vw, 1.38rem);
+      font-weight:900;
+      line-height:1.18;
+      word-break:break-word;
+    }
+    .metric-sub{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:.8rem;
+      line-height:1.45;
+    }
+
+    .value-positive{color:#2fd27f}
+    .value-negative{color:#ff6060}
+    .value-neutral{color:#f2f6ff}
+
+    .accent-bar{
+      margin-top:12px;
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .accent-bar > span{
+      display:block;height:100%;
+      width:50%;
+      border-radius:inherit;
+      transition:width .32s ease, margin-left .32s ease, background .32s ease;
+      background:linear-gradient(90deg, #47d38a, #7ef0c4);
+    }
+
+    .right-grid{
+      display:grid;
+      gap:18px;
+    }
+
+    .subgrid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    .scenario-toolbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .tool-label{
+      color:#f0f4ff;
+      font-weight:800;
+      font-size:.93rem;
+      margin-bottom:7px;
+    }
+    .scenario-header-note{
+      color:var(--muted);
+      font-size:.82rem;
+      line-height:1.55;
+      max-width:640px;
+    }
+    .scenario-highlight{
+      margin-top:6px;
+      color:var(--yellow);
+      font-weight:800;
+      font-size:.86rem;
+      line-height:1.55;
+    }
+
+    .table-tool-group{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .count-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 11px;
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      color:#dde5fa;
+      font-size:.86rem;
+      white-space:nowrap;
+    }
+    .table-action{
+      border:1px solid rgba(255,255,255,.09);
+      color:#edf2ff;
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+      background:rgba(255,255,255,.04);
+    }
+    .table-action:hover{transform:translateY(-1px)}
+    .table-action.gradient{
+      background:var(--button-grad);
+      border-color:transparent;
+      color:#fff;
+      box-shadow:0 12px 24px rgba(0,0,0,.18);
+    }
+    .table-action.gradient:hover{box-shadow:0 16px 28px rgba(0,0,0,.22)}
+    .table-action.muted{
+      background:rgba(255,255,255,.03);
+    }
+
+    .current-price-wrap{
+      margin:12px 0 12px;
+      display:grid;
+      gap:10px;
+    }
+    .current-price-card{
+      border-radius:18px;
+      border:1px solid rgba(72,108,183,.30);
+      background:linear-gradient(135deg, #1f5fbf 0%, #2d84ff 52%, #69b1ff 100%);
+      padding:14px 15px;
+      box-shadow:0 12px 24px rgba(18,62,120,.14);
+    }
+    .current-price-label{
+      color:#fff;
+      font-weight:800;
+      font-size:.93rem;
+      margin-bottom:6px;
+    }
+    .current-price-value{
+      font-size:clamp(1.2rem, 2vw, 1.68rem);
+      font-weight:900;
+      letter-spacing:.01em;
+      color:var(--yellow);
+      text-shadow:0 1px 0 rgba(0,0,0,.18);
+      word-break:break-word;
+    }
+    .current-price-help{
+      color:rgba(255,255,255,.88);
+      font-size:.82rem;
+      line-height:1.55;
+    }
+
+    .scenario-wrap{
+      overflow:auto;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+      min-width:780px;
+    }
+    colgroup col:nth-child(1){width:11%}
+    colgroup col:nth-child(2){width:15%}
+    colgroup col:nth-child(3){width:15%}
+    colgroup col:nth-child(4){width:12%}
+    colgroup col:nth-child(5){width:13%}
+    colgroup col:nth-child(6){width:27%}
+    colgroup col:nth-child(7){width:7%}
+
+    th,td{
+      padding:10px 8px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      text-align:left;
+      font-size:.86rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      vertical-align:middle;
+    }
+    th{
+      position:sticky;
+      top:0;
+      z-index:1;
+      background:linear-gradient(180deg, rgba(40,44,56,.98), rgba(29,32,40,.98));
+      color:#eef2ff;
+      font-weight:900;
+    }
+    tbody td{
+      font-weight:800;
+      color:#eef2ff;
+    }
+    tbody tr:hover td{background:rgba(255,255,255,.03)}
+    tr.base-row td{
+      background:linear-gradient(180deg, rgba(255,241,191,.98), rgba(255,234,162,.96));
+      color:#4c3a00;
+    }
+    tr.base-row td:first-child{
+      border-left:3px solid var(--yellow);
+    }
+    tr.base-row td .scenario-btn{
+      color:#3d2a00;
+      border-color:rgba(229,201,95,.95);
+      background:rgba(255,255,255,.58);
+    }
+    tr.base-row td .scenario-btn:hover{
+      background:rgba(255,255,255,.74);
+    }
+    tr.base-row td .scenario-btn.active{
+      color:#3d2a00;
+      background:linear-gradient(135deg, rgba(255,216,77,.98), rgba(255,185,60,.96));
+    }
+    tr.base-row td .scenario-fixed{
+      color:#4c3a00;
+      background:rgba(255,255,255,.38);
+      border-color:rgba(229,201,95,.70);
+    }
+    tr.base-row:hover td{
+      background:linear-gradient(180deg, rgba(255,241,191,.98), rgba(255,234,162,.96)) !important;
+    }
+    .scenario-btn{
+      width:100%;
+      border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      border-radius:12px;
+      padding:8px 9px;
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .scenario-btn:hover{
+      transform:translateY(-1px);
+      border-color:rgba(255,216,77,.30);
+      background:rgba(255,216,77,.10);
+    }
+    .scenario-btn.active{
+      border-color:rgba(255,216,77,.55);
+      box-shadow:0 0 0 1px rgba(255,216,77,.10) inset;
+      background:linear-gradient(135deg, rgba(255,216,77,.98), rgba(255,185,60,.96));
+      color:#3d2a00;
+    }
+    .scenario-fixed{
+      display:inline-flex;
+      align-items:center;
+      justify-content:flex-start;
+      width:100%;
+      padding:8px 10px;
+      border-radius:12px;
+      background:rgba(255,255,255,.025);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .scenario-strong{
+      font-weight:900;
+    }
+    .scenario-label{
+      color:#4f46e5;
+      font-weight:900;
+    }
+    tr.base-row td.scenario-label{
+      color:#4f46e5;
+    }
+
+    .scenario-footer{
+      margin-top:12px;
+      color:#c5cfdf;
+      font-size:.85rem;
+      line-height:1.7;
+    }
+    .scenario-footer .line{
+      margin-top:8px;
+      color:var(--yellow);
+      font-weight:900;
+    }
+
+    details.card{padding:0}
+    details summary{
+      list-style:none;
+      cursor:pointer;
+      padding:16px 18px 15px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    details summary::-webkit-details-marker{display:none}
+    .details-body{padding:16px 18px 18px}
+    .formula{
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      padding:14px 15px;
+      color:#e8eefc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:.84rem;
+      line-height:1.72;
+      white-space:pre-wrap;
+      overflow-x:auto;
+    }
+    .formula-note{
+      margin-top:12px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:#d8def0;
+      padding:14px 15px;
+      line-height:1.72;
+      font-size:.9rem;
+    }
+
+    .footer{
+      margin-top:18px;
+      padding:18px 12px 10px;
+      text-align:center;
+      color:#d2d9e6;
+      line-height:1.9;
+      font-size:.92rem;
+    }
+    .maker{
+      margin-top:10px;
+      font-weight:900;
+      color:var(--yellow);
+    }
+
+    .hidden{display:none !important}
+    .small-gap{margin-top:8px}
+    .mono{font-variant-numeric: tabular-nums}
+
+    @media (max-width: 1180px){
+      .layout{grid-template-columns:1fr}
+      .subgrid{grid-template-columns:1fr}
+      .hero-top{flex-direction:column}
+      .hero-actions{justify-content:flex-end;width:100%}
+      .hero-pills{justify-content:flex-start}
+    }
+    @media (max-width: 760px){
+      .app{width:min(100% - 14px, 100%)}
+      .hero, .card{border-radius:20px}
+      .card-body{padding:14px}
+      .card-header{padding:14px}
+      .row-2{grid-template-columns:1fr}
+      .segment.three{grid-template-columns:1fr}
+      .result-grid{grid-template-columns:repeat(auto-fit, minmax(150px, 1fr))}
+      .scenario-toolbar{flex-direction:column}
+      .table-action, .count-badge{width:100%;justify-content:center}
+      th,td{padding:9px 7px}
+    }
+  
+    /* ===== Light theme refresh (v5) ===== */
+    body{
+      background:
+        radial-gradient(circle at top left, rgba(91,140,255,.14), transparent 24%),
+        radial-gradient(circle at top right, rgba(91,140,255,.08), transparent 20%),
+        #edf1f6;
+      color:#17304a;
+    }
+    .hero{
+      background:linear-gradient(135deg, #1567d8 0%, #2d84ff 48%, #69b1ff 100%);
+      border-color:rgba(255,255,255,.20);
+    }
+    .hero::after{
+      background:radial-gradient(circle, rgba(255,255,255,.16), transparent 60%);
+    }
+    h1{
+      color:var(--yellow);
+      text-shadow:0 2px 16px rgba(255,216,77,.14);
+    }
+    .subtitle{
+      color:rgba(255,255,255,.92);
+    }
+    .eyebrow,
+    .pill{
+      background:rgba(255,255,255,.16);
+      border-color:rgba(255,255,255,.18);
+      color:#fff;
+    }
+    .pill{
+      box-shadow:0 10px 22px rgba(18,62,120,.12);
+    }
+
+    .card{
+      background:#fff;
+      border-color:rgba(62,114,181,.14);
+      color:#17304a;
+    }
+    .right-grid .card{
+      background:linear-gradient(180deg, #e8f4ff 0%, #d8ecff 100%);
+      border-color:rgba(62,114,181,.18);
+      color:#17304a;
+    }
+    .card-header{
+      background:linear-gradient(180deg, rgba(214,232,255,.82), rgba(255,255,255,.10));
+      border-bottom-color:rgba(62,114,181,.10);
+    }
+    .card-title,
+    .section-label,
+    .field label,
+    .compact-head .label,
+    .tool-label,
+    .metric-head{
+      color:#17304a;
+    }
+    .current-price-label{
+      color:#fff;
+    }
+    .current-price-value{
+      color:var(--yellow);
+    }
+    .card-subtitle,
+    .help,
+    .field-note,
+    .current-price-help,
+    .scenario-header-note,
+    .scenario-footer,
+    .scenario-footer .line,
+    .scenario-fixed,
+    .metric-sub,
+    .formula-note{
+      color:#54677d;
+    }
+    .current-price-value,
+    .scenario-strong,
+    .formula{
+      color:#17304a;
+    }
+    .formula,
+    .formula-note{
+      background:#fff;
+      border-color:rgba(62,114,181,.14);
+    }
+    .metric{
+      background:#fff;
+      border-color:rgba(62,114,181,.14);
+      color:#17304a;
+    }
+    .metric-value{
+      color:#17304a;
+    }
+    .metric-value.value-positive{ color:#2fd27f; }
+    .metric-value.value-negative{ color:#ff6060; }
+    .value-neutral{ color:#17304a; }
+    .field,
+    .compact-box,
+    .segment,
+    .current-price-card,
+    .scenario-wrap,
+    .count-badge,
+    .table-action,
+    .stepper,
+    .quick-btn,
+    .tax-chip,
+    .num-input,
+    .select-input{
+      background:#fff;
+      border-color:rgba(62,114,181,.14);
+      color:#17304a;
+    }
+    .status-box{
+      background:linear-gradient(180deg, #e8f4ff 0%, #d7ebff 100%);
+      border-color:#a8cbf2;
+      color:#17304a;
+    }
+    .segment button{
+      color:#29405a;
+    }
+    .segment button.active{
+      background:var(--button-grad-2);
+      color:#fff;
+    }
+    .tax-chip.active{
+      background:var(--button-grad-yellow);
+      color:#5c3f00;
+      border-color:transparent;
+      box-shadow:0 12px 24px rgba(0,0,0,.16);
+    }
+    .quick-btn.active,
+    .scenario-btn.active{
+      background:var(--button-grad);
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 12px 24px rgba(0,0,0,.16);
+    }
+    .table-action.gradient{
+      background:var(--button-grad);
+      border-color:transparent;
+      color:#fff;
+    }
+    .table-action.muted{
+      background:#fff;
+      color:#17304a;
+    }
+    .table-action:hover,
+    .quick-btn:hover,
+    .tax-chip:hover,
+    .scenario-btn:hover,
+    .step-btn:hover{
+      background:#eef6ff;
+      color:#17304a;
+    }
+    .stepper .step-btn{
+      background:#fff;
+      color:#29405a;
+    }
+    .stepper .step-btn.top{
+      border-bottom:1px solid rgba(62,114,181,.14);
+    }
+    .num-input,
+    .select-input{
+      background:#fff;
+      color:#17304a;
+      border-color:rgba(62,114,181,.14);
+    }
+    .num-input:focus,
+    .select-input:focus{
+      border-color:rgba(43,109,244,.52);
+      box-shadow:0 0 0 4px rgba(43,109,244,.10);
+    }
+    .scenario-wrap{
+      background:#fff;
+    }
+    .scenario-btn{
+      background:#fff;
+      color:#17304a;
+      border-color:rgba(62,114,181,.14);
+    }
+    .scenario-btn.active{
+      color:#fff;
+    }
+    .scenario-btn:hover{
+      background:#eef6ff;
+      border-color:rgba(43,109,244,.30);
+      color:#17304a;
+    }
+    .current-price-card{
+      background:linear-gradient(135deg, #1f5fbf 0%, #2d84ff 52%, #69b1ff 100%);
+      border-color:rgba(72,108,183,.30);
+      box-shadow:0 12px 24px rgba(18,62,120,.14);
+    }
+    .current-price-card .current-price-label{
+      color:#fff;
+    }
+    .current-price-card .current-price-value{
+      color:var(--yellow);
+    }
+    .current-price-card .current-price-help{
+      color:rgba(255,255,255,.88);
+    }
+    .scenario-highlight{
+      color:#1760d9;
+    }
+    tr.base-row:hover td{
+      background:linear-gradient(180deg, rgba(255,241,191,.98), rgba(255,234,162,.96)) !important;
+    }
+    .scenario-footer .line{
+      font-weight:800;
+    }
+    th, td{
+      padding:8px 6px;
+      font-size:.79rem;
+    }
+    th{
+      background:linear-gradient(180deg, rgba(235,243,255,.98), rgba(223,236,255,.98));
+      color:#17304a;
+    }
+    tbody td{
+      color:#17304a;
+    }
+    tr.base-row td{
+      background:linear-gradient(180deg, #fff7cc 0%, #ffeeb0 100%);
+      color:#7a5800;
+    }
+    .footer{
+      color:#54677d;
+    }
+    .footer .maker{
+      color:#1760d9;
+    }
+
+    .num-input[aria-invalid="true"]{border-color:#b42318; outline:1px solid #b42318}
+    .table-action:disabled{opacity:.5; cursor:default}
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 18px;
+      border: 1px solid #0d4fb3;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(135deg, #1769e0, #0d4fb3);
+      text-decoration: none;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 10px 22px rgba(23, 105, 224, .22);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 1rem;
+      line-height: 1.58;
+      box-sizing: border-box;
+      width: fit-content;
+      flex-shrink: 0;
+      transform-origin: center;
+    }
+    .back-link:active { animation: elasticPress .42s cubic-bezier(.2, 1.4, .35, 1); }
+    @media (prefers-reduced-motion: reduce) {
+      .back-link:active { animation-duration: .01ms; }
+    }
+    @keyframes elasticPress {
+      0% { transform: scale(1); }
+      28% { transform: scale(1.08); }
+      62% { transform: scale(.985); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="hero-top">
+        <div class="title-wrap">
+          <div class="eyebrow">📈 台股試算工具｜單檔可直接執行</div>
+          <h1>台灣股票當沖投資損益模擬計算機</h1>
+          <p class="subtitle">
+            支援個股與 ETF、做多與做空、券商手續費折扣、股數／張數切換、買入／賣出價格單位模擬，以及更細緻的損益與情境分析。
+          </p>
+        </div>
+        <div class="hero-actions" aria-label="頁首快捷連結">
+          <a class="back-link" href="https://sites.google.com/view/pkpk725/" target="_blank" rel="noopener noreferrer">回 榮生的小程式區</a>
+        </div>
+
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">⚙️ 基本輸入與設定</h2>
+            <div class="card-subtitle">左側只保留必要輸入，避免一般使用者看起來太複雜。</div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="section">
+            <div class="section-label">交易類型</div>
+            <div class="segment" role="group" aria-label="交易類型">
+              <button type="button" class="active" data-trade-type="stock" aria-pressed="true">個股</button>
+              <button type="button" data-trade-type="etf" aria-pressed="false">一般 ETF</button>
+            </div>
+            <div class="tax-chips">
+              <span class="tax-chip active" data-tax-chip="stock">股票當沖稅率 <strong>0.15%</strong></span>
+              <span class="tax-chip" data-tax-chip="etf">一般 ETF 稅率 <strong>0.10%</strong></span>
+            </div>
+            <div class="help">個股 0.15% 適用於符合規定的現股當沖，優惠至 2027 年 12 月 31 日。一般 ETF 以 0.10% 試算，免稅債券 ETF 請另行確認。</div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">交易方向</div>
+            <div class="segment" role="group" aria-label="交易方向">
+              <button type="button" class="active" data-direction="long" aria-pressed="true">做多 (買進)</button>
+              <button type="button" data-direction="short" aria-pressed="false">做空 (賣出)</button>
+            </div>
+            <div class="help">做多時只輸入買入價格；做空時只輸入賣出價格。另一側價格會移到右邊的情境模擬區顯示與操作。</div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">基本輸入</div>
+
+            <div class="field">
+              <div class="field-head">
+                <label id="priceFieldLabel" for="buyPrice">買入價格（NT$／股）</label>
+                <span class="field-note" id="priceFieldNote">步進 0.1</span>
+              </div>
+              <div id="buyPriceBlock">
+                <div class="control-row">
+                  <input id="buyPrice" class="num-input" type="number" required min="0.01" max="1000000" step="0.01" data-increment="0.1" value="100" inputmode="decimal" aria-describedby="buyPriceHelp" />
+                  <div class="stepper" aria-hidden="false">
+                    <button type="button" class="step-btn top" data-stepper="buyPrice" data-dir="up" aria-label="增加買入價格">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M6 14l6-6 6 6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button type="button" class="step-btn" data-stepper="buyPrice" data-dir="down" aria-label="減少買入價格">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M6 10l6 6 6-6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div id="buyPriceHelp" class="help">做多時使用此欄位；做空時此欄位會移到右邊情境模擬中的「目前買入價格」。</div>
+              </div>
+
+              <div id="sellPriceBlock" class="hidden">
+                <div class="control-row">
+                  <input id="sellPrice" class="num-input" type="number" required min="0.01" max="1000000" step="0.01" data-increment="0.1" value="100" inputmode="decimal" aria-describedby="sellPriceHelp" />
+                  <div class="stepper" aria-hidden="false">
+                    <button type="button" class="step-btn top" data-stepper="sellPrice" data-dir="up" aria-label="增加賣出價格">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M6 14l6-6 6 6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <button type="button" class="step-btn" data-stepper="sellPrice" data-dir="down" aria-label="減少賣出價格">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M6 10l6 6 6-6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div id="sellPriceHelp" class="help">做空時使用此欄位；做多時此欄位會移到右邊情境模擬中的「目前賣出價格」。</div>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <label for="quantity">交易股數／張數</label>
+                <span class="field-note" id="quantityNote">目前：股數</span>
+              </div>
+              <div class="segment" role="group" aria-label="交易股數或張數">
+                <button type="button" class="active" data-qty-unit="shares" aria-pressed="true">股數</button>
+                <button type="button" data-qty-unit="lots" aria-pressed="false">張數</button>
+              </div>
+              <div class="small-gap"></div>
+              <div class="control-row">
+                <input id="quantity" class="num-input" type="number" required min="1" max="100000000" step="1" value="1000" inputmode="numeric" aria-describedby="quantityHelp" />
+                <div class="stepper">
+                  <button type="button" class="step-btn top" data-stepper="quantity" data-dir="up" aria-label="增加交易數量">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 14l6-6 6 6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="step-btn" data-stepper="quantity" data-dir="down" aria-label="減少交易數量">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 10l6 6 6-6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div id="quantityHelp" class="help">股數須為整數。1 張 = 1,000 股，張數可輸入至小數第 3 位。</div>
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <label for="feeRate">牌告手續費率（%）</label>
+                <span class="field-note">步進 0.01</span>
+              </div>
+              <div class="control-row">
+                <input id="feeRate" class="num-input" type="number" required min="0" max="100" step="0.0001" data-increment="0.01" value="0.1425" inputmode="decimal" />
+                <div class="stepper">
+                  <button type="button" class="step-btn top" data-stepper="feeRate" data-dir="up" aria-label="增加手續費率">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 14l6-6 6 6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="step-btn" data-stepper="feeRate" data-dir="down" aria-label="減少手續費率">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 10l6 6 6-6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="help">實際成交費用可能再乘上券商折扣。</div>
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <label for="feeDiscount">券商手續費折扣（%）</label>
+                <span class="field-note">快速選擇</span>
+              </div>
+              <div class="control-row">
+                <input id="feeDiscount" class="num-input" type="number" required min="0" max="100" step="1" value="28" inputmode="numeric" />
+                <div class="stepper">
+                  <button type="button" class="step-btn top" data-stepper="feeDiscount" data-dir="up" aria-label="增加手續費折扣">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 14l6-6 6 6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="step-btn" data-stepper="feeDiscount" data-dir="down" aria-label="減少手續費折扣">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 10l6 6 6-6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="quick-row" id="discountQuickRow">
+                <button type="button" class="quick-btn" data-discount="10">1折</button>
+                <button type="button" class="quick-btn" data-discount="18">1.8折</button>
+                <button type="button" class="quick-btn" data-discount="20">2折</button>
+                <button type="button" class="quick-btn" data-discount="25">2.5折</button>
+                <button type="button" class="quick-btn active" data-discount="28">2.8折</button>
+                <button type="button" class="quick-btn" data-discount="38">3.8折</button>
+                <button type="button" class="quick-btn" data-discount="50">5折</button>
+                <button type="button" class="quick-btn" data-discount="60">6折</button>
+                <button type="button" class="quick-btn" data-discount="65">6.5折</button>
+              </div>
+              <div class="help">1折代表 10%，2.8折代表 28%，可用來模擬不同券商折扣。</div>
+            </div>
+
+            <div class="field">
+              <div class="field-head">
+                <label for="targetProfit">目標稅後損益（NT$）</label>
+                <span class="field-note">步進 100</span>
+              </div>
+              <div class="control-row">
+                <input id="targetProfit" class="num-input" type="number" required min="-999999999" max="999999999" step="1" data-increment="100" value="1000" inputmode="numeric" />
+                <div class="stepper">
+                  <button type="button" class="step-btn top" data-stepper="targetProfit" data-dir="up" aria-label="增加目標損益">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 14l6-6 6 6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="step-btn" data-stepper="targetProfit" data-dir="down" aria-label="減少目標損益">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M6 10l6 6 6-6" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="help">輸入想達到的稅後損益，系統會反推對應的價格。做多會反推賣出價，做空會反推回補價。</div>
+            </div>
+
+            <div class="compact-box">
+              <div class="compact-head">
+                <div class="label">🎯 目標價格試算</div>
+                <div class="note">新手也能看懂</div>
+              </div>
+              <div id="targetPriceBox" class="status-box mono">
+                輸入目標損益後，會在這裡顯示反推結果。
+              </div>
+              <div class="notice-box target-example" style="margin-top:10px;">
+                <strong>範例說明：</strong><br>
+                例如你目前買入 100 元、持有 1,000 股，並希望「稅後賺 1,000 元」，系統會自動反推出大約需要賣到多少價格，才有機會達成這個目標。<br>
+                這個區塊的作用，是把「想賺多少」直接轉成「要賣多少」，讓新手不用自己倒算公式。<br>
+                若切換為做空，則會反推回補價格，概念相同、方向相反。
+              </div>
+              <div class="help">
+                例如：若你想「預估賺 1,000 元」，系統會根據目前的買入價格、股數、手續費與稅率，反推出達成該損益的賣出價格。<br>
+                若改成做空，則會反推較低的回補價。
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">即時資訊</div>
+            <div class="status-box" id="liveStatus" role="status">準備計算中。輸入價格與數量後，右側結果會立即更新。</div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="right-grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">💹 計算結果</h2>
+              <div class="card-subtitle">所有結果均以新台幣數值顯示，並即時依輸入更新。</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="result-grid">
+              <div class="metric">
+                <div class="metric-head"><span>買入總額</span><span aria-hidden="true">🧾</span></div>
+                <div class="metric-value mono" id="buyTotal">0.00</div>
+                <div class="metric-sub">買入價格 × 實際股數</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>賣出總額</span><span aria-hidden="true">📤</span></div>
+                <div class="metric-value mono" id="sellTotal">0.00</div>
+                <div class="metric-sub">賣出價格 × 實際股數</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>買進手續費</span><span aria-hidden="true">🏦</span></div>
+                <div class="metric-value mono" id="buyFee">0.00</div>
+                <div class="metric-sub">買入總額 × 有效費率</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>賣出手續費</span><span aria-hidden="true">🏦</span></div>
+                <div class="metric-value mono" id="sellFee">0.00</div>
+                <div class="metric-sub">賣出總額 × 有效費率</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>證交稅</span><span aria-hidden="true">🏛️</span></div>
+                <div class="metric-value mono" id="taxFee">0.00</div>
+                <div class="metric-sub">依交易類型自動套用</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>稅後損益</span><span aria-hidden="true">📊</span></div>
+                <div class="metric-value mono" id="netProfit">0.00</div>
+                <div class="metric-sub">收入 - 成本 - 費用 - 稅</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>報酬率</span><span aria-hidden="true">📈</span></div>
+                <div class="metric-value mono" id="roi">0.00%</div>
+                <div class="metric-sub">稅後損益 ÷ 實際投入成本</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>損益平衡價</span><span aria-hidden="true">⚖️</span></div>
+                <div class="metric-value mono" id="breakEven">0.00</div>
+                <div class="metric-sub" id="breakEvenSub">達到不賺不賠的價格</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>每股損益</span><span aria-hidden="true">🪙</span></div>
+                <div class="metric-value mono" id="perShare">0.00</div>
+                <div class="metric-sub">稅後損益 ÷ 實際股數</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>每張損益</span><span aria-hidden="true">📦</span></div>
+                <div class="metric-value mono" id="perLot">0.00</div>
+                <div class="metric-sub">以 1000 股換算</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>完整交易成本</span><span aria-hidden="true">🧮</span></div>
+                <div class="metric-value mono" id="totalCost">0.00</div>
+                <div class="metric-sub">本金＋手續費＋證交稅</div>
+              </div>
+              <div class="metric">
+                <div class="metric-head"><span>有效手續費率</span><span aria-hidden="true">🔍</span></div>
+                <div class="metric-value mono" id="effFeeRate">0.0000%</div>
+                <div class="metric-sub">牌告率 × 折扣</div>
+              </div>
+            </div>
+            <div class="accent-bar" aria-hidden="true"><span id="barFill"></span></div>
+            <div class="help" id="resultHint">正數以綠色顯示、負數以紅色顯示。</div>
+          </div>
+        </div>
+
+        <div class="subgrid">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">🔁 價格區間模擬</h2>
+                <div class="card-subtitle">上、下方預設各 5 行，每次可調整 5 行，每側最多 100 行。表格只顯示試算範圍內的正價格。</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="scenario-toolbar">
+                <div>
+                  <div class="tool-label" id="scenarioUnitLabel">買入/賣出價格單位</div>
+                  <div class="scenario-header-note">情境模擬以此步進上下展開，提供 0.5 / 1 / 5 / 10 / 50 / 100 / 500 / 1000 元切換。</div>
+                  <div class="scenario-highlight">點擊「買入/賣出價格」，交易顯示的「買入/賣出價格（NT$／股）」會一起連動，計算結果也會一起連動。</div>
+                </div>
+                <div class="table-tool-group">
+                  <select id="scenarioStepUnit" class="select-input" aria-label="買入/賣出價格單位">
+                    <option value="0.5">0.5 元</option>
+                    <option value="1" selected>1 元（預設）</option>
+                    <option value="5">5 元</option>
+                    <option value="10">10 元</option>
+                    <option value="50">50 元</option>
+                    <option value="100">100 元</option>
+                    <option value="500">500 元</option>
+                    <option value="1000">1000 元</option>
+                  </select>
+                  <div class="count-badge">上方：<span id="upperCount">5</span> 行</div>
+                  <div class="count-badge">下方：<span id="lowerCount">5</span> 行</div>
+                  <button type="button" class="table-action muted" id="upperMinusBtn">上方 -5</button>
+                  <button type="button" class="table-action gradient" id="upperPlusBtn">上方 +5</button>
+                  <button type="button" class="table-action muted" id="lowerMinusBtn">下方 -5</button>
+                  <button type="button" class="table-action gradient" id="lowerPlusBtn">下方 +5</button>
+                </div>
+              </div>
+
+              <div class="current-price-wrap">
+                <div class="current-price-card">
+                  <div class="current-price-label" id="currentBuyPriceLabel">目前買入價格（NT$／股）</div>
+                  <div class="current-price-value mono" id="currentBuyPriceValue">100.0</div>
+                </div>
+                <div class="current-price-card">
+                  <div class="current-price-label" id="currentSellPriceLabel">目前賣出價格（NT$／股）</div>
+                  <div class="current-price-value mono" id="currentSellPriceValue">100.0</div>
+                </div>
+                <div class="current-price-help" id="currentPriceHelp">
+                  無手動輸入、也無上下箭頭；只能點擊下方的「買入價格 / 賣出價格」情境來更新對應的數值，上方計算結果也會同步重算。
+                </div>
+              </div>
+
+              <div class="scenario-wrap">
+                <table>
+                  <colgroup>
+                    <col style="width:11%">
+                    <col style="width:12%">
+                    <col style="width:12%">
+                    <col style="width:8%">
+                    <col style="width:8%">
+                    <col style="width:35%">
+                    <col style="width:14%">
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>情境</th>
+                      <th>買入價格</th>
+                      <th>賣出價格</th>
+                      <th>證交稅</th>
+                      <th>總手續費</th>
+                      <th>稅後損益</th>
+                      <th>報酬率</th>
+                    </tr>
+                  </thead>
+                  <tbody id="scenarioTable"></tbody>
+                </table>
+              </div>
+
+              <div class="scenario-footer">
+                <div>表格中的固定價格欄位只顯示當前基準；點擊另一側的情境價格會更新損益，點擊「原始 +0」的價格可回到基準。</div>
+                <div class="line">「原始 +0」列會以淺黃色底標示；數字全數以粗體呈現，方便快速比對。</div>
+                <div class="line">下方的「價格參考」會跟著目前方向顯示固定基準，方便你先看懂哪一邊是固定、哪一邊會變動。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">🎯 價格參考</h2>
+                <div class="card-subtitle">提供目前的基準價格與說明，方便新手快速理解。</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="status-box mono" id="referencePriceBox">請先輸入或切換方向。</div>
+              <div class="help">
+                這裡會顯示當前方向下的基準價格：<br>
+                做多時顯示買入價格；做空時顯示賣出價格。<br>
+                若你點選情境表中的價格，右側損益會立即同步。
+              </div>
+              <div class="notice-box small-gap">
+                <strong>新手提醒：</strong><br>
+                1. 做多是先買再賣，做空是先賣再買回。<br>
+                2. 單位切換只影響情境模擬的上下展開步進。<br>
+                3. 若想快速看不同價格的損益，可直接點選表格中的情境價格。<br>
+                4. 稅率與折扣都可以先用預設值，之後再慢慢調整理解。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <details class="card" open style="margin-top:18px;">
+      <summary>
+        <span class="card-title">🧾 計算公式與注意事項</span>
+        <span aria-hidden="true">▾</span>
+      </summary>
+      <div class="details-body">
+        <div class="formula mono" id="formulaBlock">公式載入中…</div>
+        <div class="formula-note">
+          本工具僅供試算參考，不構成任何投資建議。<br>
+          實際交易價格、手續費、價差與交易限制，請以 TWSE 臺灣證券交易所 公告與交易確認畫面為準。<br><br>
+          手續費與證交稅依比例估算。實際帳單可能受券商最低手續費、進位方式與稅額取整影響。<br>
+          情境與反推價格為理論試算，實際委託須符合標的升降單位與漲跌幅限制。<br>
+          制度參考：<a href="https://www.twse.com.tw/zh/products/system/day-trading.html">證交所當日沖銷交易專區</a>、<a href="https://www.etax.nat.gov.tw/etwmain/tax-info/understanding/tax-knowledge/rwG2M1N">財政部買賣股票稅務說明</a>。<br>
+          若為做空情境，損益公式將以回補成本作為成本端，稅則仍依賣出成交額計算。
+        </div>
+      </div>
+    </details>
+
+    <footer class="footer">
+      <div>本工具僅供試算參考，不構成任何投資建議。</div>
+      <div>實際交易價格、手續費、價差與交易限制，請以 TWSE 臺灣證券交易所 公告與交易確認畫面為準</div>
+      <div class="maker">彭榮生 製作</div>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const CONFIG = {
+        tradeTypes: {
+          stock: { label: "個股", taxRate: 0.0015 },
+          etf:   { label: "一般 ETF", taxRate: 0.0010 }
+        },
+        defaultFeeRate: 0.1425,
+        defaultFeeDiscount: 28,
+        defaultQuantity: 1000,
+        defaultPrice: 100,
+        defaultTargetProfit: 1000,
+        defaultStepUnit: 1,
+        defaultUpperRows: 5,
+        defaultLowerRows: 5,
+        maxScenarioRows: 100,
+        moneyDigits: 2
+      };
+
+      const state = {
+        tradeType: "stock",
+        direction: "long", // long = 做多, short = 做空
+        qtyUnit: "shares",  // shares or lots
+        stepUnit: CONFIG.defaultStepUnit,
+        upperRows: CONFIG.defaultUpperRows,
+        lowerRows: CONFIG.defaultLowerRows,
+        // basic values = 基本輸入；current values = 現行試算值（會因情境點擊改變）
+        basicBuyPrice: CONFIG.defaultPrice,
+        basicSellPrice: CONFIG.defaultPrice,
+        shares: CONFIG.defaultQuantity,
+        feeRate: CONFIG.defaultFeeRate,
+        feeDiscount: CONFIG.defaultFeeDiscount,
+        targetProfit: CONFIG.defaultTargetProfit,
+        selectedOffset: 0
+      };
+
+      const $ = (sel) => document.querySelector(sel);
+      const els = {
+        tradeButtons: document.querySelectorAll("[data-trade-type]"),
+        directionButtons: document.querySelectorAll("[data-direction]"),
+        qtyButtons: document.querySelectorAll("[data-qty-unit]"),
+        taxChips: document.querySelectorAll("[data-tax-chip]"),
+        buyPriceBlock: $("#buyPriceBlock"),
+        sellPriceBlock: $("#sellPriceBlock"),
+        buyPrice: $("#buyPrice"),
+        sellPrice: $("#sellPrice"),
+        priceFieldLabel: $("#priceFieldLabel"),
+        quantity: $("#quantity"),
+        quantityNote: $("#quantityNote"),
+        feeRate: $("#feeRate"),
+        feeDiscount: $("#feeDiscount"),
+        discountQuickRow: $("#discountQuickRow"),
+        targetProfit: $("#targetProfit"),
+        targetPriceBox: $("#targetPriceBox"),
+        liveStatus: $("#liveStatus"),
+        buyTotal: $("#buyTotal"),
+        sellTotal: $("#sellTotal"),
+        buyFee: $("#buyFee"),
+        sellFee: $("#sellFee"),
+        taxFee: $("#taxFee"),
+        netProfit: $("#netProfit"),
+        roi: $("#roi"),
+        breakEven: $("#breakEven"),
+        breakEvenSub: $("#breakEvenSub"),
+        perShare: $("#perShare"),
+        perLot: $("#perLot"),
+        totalCost: $("#totalCost"),
+        effFeeRate: $("#effFeeRate"),
+        resultHint: $("#resultHint"),
+        barFill: $("#barFill"),
+        scenarioStepUnit: $("#scenarioStepUnit"),
+        upperCount: $("#upperCount"),
+        lowerCount: $("#lowerCount"),
+        upperMinusBtn: $("#upperMinusBtn"),
+        upperPlusBtn: $("#upperPlusBtn"),
+        lowerMinusBtn: $("#lowerMinusBtn"),
+        lowerPlusBtn: $("#lowerPlusBtn"),
+        scenarioTable: $("#scenarioTable"),
+        currentBuyPriceValue: $("#currentBuyPriceValue"),
+        currentSellPriceValue: $("#currentSellPriceValue"),
+        referencePriceBox: $("#referencePriceBox"),
+        formulaBlock: $("#formulaBlock")
+      };
+
+      const fmt = new Intl.NumberFormat("zh-TW", {
+        minimumFractionDigits: CONFIG.moneyDigits,
+        maximumFractionDigits: CONFIG.moneyDigits
+      });
+
+      const priceFormat = new Intl.NumberFormat("zh-TW", {
+        minimumFractionDigits: 1, maximumFractionDigits: 2
+      });
+      const theoreticalPriceFormat = new Intl.NumberFormat("zh-TW", {
+        minimumFractionDigits: 2, maximumFractionDigits: 6
+      });
+
+      function roundTo(value, digits){
+        const scale = 10 ** digits;
+        return Math.round(value * scale) / scale;
+      }
+
+      function formatAmount(value){
+        return fmt.format(value === 0 ? 0 : value);
+      }
+
+      function formatPrice(value){
+        return priceFormat.format(value);
+      }
+
+      function formatPercent(value, digits = 2){
+        return `${(value === 0 ? 0 : value).toFixed(digits)}%`;
+      }
+
+      function classifyValue(v){
+        if (v > 0) return "value-positive";
+        if (v < 0) return "value-negative";
+        return "value-neutral";
+      }
+
+      function syncTradeButtons(){
+        els.tradeButtons.forEach(btn => {
+          const active = btn.dataset.tradeType === state.tradeType;
+          btn.classList.toggle("active", active);
+          btn.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+        els.taxChips.forEach(chip => {
+          chip.classList.toggle("active", chip.dataset.taxChip === state.tradeType);
+        });
+      }
+
+      function syncDirectionButtons(){
+        els.directionButtons.forEach(btn => {
+          const active = btn.dataset.direction === state.direction;
+          btn.classList.toggle("active", active);
+          btn.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+      }
+
+      function syncQtyButtons(){
+        els.qtyButtons.forEach(btn => {
+          const active = btn.dataset.qtyUnit === state.qtyUnit;
+          btn.classList.toggle("active", active);
+          btn.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+      }
+
+
+      const fields = [
+        { el: els.buyPrice, key: "basicBuyPrice", label: "買入價格", digits: 2 },
+        { el: els.sellPrice, key: "basicSellPrice", label: "賣出價格", digits: 2 },
+        { el: els.quantity, key: "shares", label: "交易數量" },
+        { el: els.feeRate, key: "feeRate", label: "牌告手續費率", digits: 4 },
+        { el: els.feeDiscount, key: "feeDiscount", label: "手續費折扣", digits: 0 },
+        { el: els.targetProfit, key: "targetProfit", label: "目標稅後損益", digits: 0 }
+      ];
+
+      function updatePriceSection(){
+        const long = state.direction === "long";
+        els.buyPriceBlock.classList.toggle("hidden", !long);
+        els.sellPriceBlock.classList.toggle("hidden", long);
+        els.priceFieldLabel.htmlFor = long ? "buyPrice" : "sellPrice";
+        els.priceFieldLabel.textContent = long ? "買入價格（NT$／股）" : "賣出價格（NT$／股）";
+      }
+
+      function updateQuickDiscountActive(){
+        document.querySelectorAll("#discountQuickRow .quick-btn").forEach(btn => {
+          const active = Number(btn.dataset.discount) === state.feeDiscount;
+          btn.classList.toggle("active", active);
+          btn.setAttribute("aria-pressed", String(active));
+        });
+      }
+
+      function readField(field){
+        const { el, key } = field;
+        const wasInvalid = el.getAttribute("aria-invalid") === "true";
+        if (!el.validity.valid) {
+          el.setAttribute("aria-invalid", "true");
+          return !wasInvalid;
+        }
+        el.removeAttribute("aria-invalid");
+        const scale = key === "shares" && state.qtyUnit === "lots" ? 1000 : 1;
+        const value = roundTo(el.valueAsNumber * scale, field.digits ?? 0);
+        const changed = state[key] !== value;
+        if (changed && (el === els.buyPrice || el === els.sellPrice)) {
+          state.selectedOffset = 0;
+        }
+        state[key] = value;
+        return changed || wasInvalid;
+      }
+
+      function calcTrade(buyPrice, sellPrice, shares, effFeeRate, taxRate){
+        const buyTotal = buyPrice * shares;
+        const sellTotal = sellPrice * shares;
+        const buyFee = buyTotal * effFeeRate;
+        const sellFee = sellTotal * effFeeRate;
+        const taxFee = sellTotal * taxRate;
+        const actualCost = buyTotal + buyFee;
+        const totalCost = actualCost + sellFee + taxFee;
+        const netProfit = (sellTotal - buyTotal) - (buyFee + sellFee + taxFee);
+        return {
+          buyPrice, sellPrice, buyTotal, sellTotal, buyFee, sellFee, taxFee, totalCost, netProfit,
+          roi: netProfit / actualCost * 100,
+          perShare: netProfit / shares,
+          perLot: netProfit / shares * 1000
+        };
+      }
+
+      function calc(){
+        const long = state.direction === "long";
+        const basePrice = long ? state.basicBuyPrice : state.basicSellPrice;
+        const shares = state.shares;
+        const effFeeRate = (state.feeRate / 100) * (state.feeDiscount / 100);
+        const taxRate = CONFIG.tradeTypes[state.tradeType].taxRate;
+        const priceAtOffset = offset => roundTo(basePrice + offset * state.stepUnit, 2);
+        const maxUp = Math.min(CONFIG.maxScenarioRows, Math.floor((Number(els.buyPrice.max) * 100 - Math.round(basePrice * 100)) / (state.stepUnit * 100)));
+        const maxDown = Math.min(CONFIG.maxScenarioRows, Math.floor((Math.round(basePrice * 100) - 1) / (state.stepUnit * 100)));
+        const upperRows = Math.min(state.upperRows, maxUp);
+        const lowerRows = Math.min(state.lowerRows, maxDown);
+        if (state.selectedOffset > upperRows || state.selectedOffset < -lowerRows) state.selectedOffset = 0;
+
+        const tradeAtOffset = offset => {
+          const price = priceAtOffset(offset);
+          return calcTrade(long ? basePrice : price, long ? price : basePrice, shares, effFeeRate, taxRate);
+        };
+
+        const buyFactor = 1 + effFeeRate;
+        const sellFactor = 1 - effFeeRate - taxRate;
+        const priceForProfit = profit => long
+          ? (basePrice * buyFactor + profit / shares) / sellFactor
+          : (basePrice * sellFactor - profit / shares) / buyFactor;
+        const validPrice = price => Number.isFinite(price) && price >= Number(els.buyPrice.min);
+        const breakEven = priceForProfit(0);
+        const target = priceForProfit(state.targetProfit);
+        const breakEvenPrice = validPrice(breakEven) ? breakEven : NaN;
+        const targetPrice = validPrice(target) ? target : NaN;
+        const targetCost = (long ? basePrice : targetPrice) * shares * buyFactor;
+
+        return {
+          ...tradeAtOffset(state.selectedOffset), long, shares, basePrice, effFeeRate, taxRate,
+          tradeAtOffset, upperRows, lowerRows, maxUp, maxDown, breakEvenPrice, targetPrice,
+          targetProfit: state.targetProfit, targetRoi: state.targetProfit / targetCost * 100
+        };
+      }
+
+      function renderResults(data){
+        els.buyTotal.textContent = formatAmount(data.buyTotal);
+        els.buyTotal.className = `metric-value mono ${classifyValue(data.buyTotal)}`;
+
+        els.sellTotal.textContent = formatAmount(data.sellTotal);
+        els.sellTotal.className = `metric-value mono ${classifyValue(data.sellTotal)}`;
+
+        els.buyFee.textContent = formatAmount(data.buyFee);
+        els.buyFee.className = `metric-value mono ${classifyValue(-data.buyFee)}`;
+
+        els.sellFee.textContent = formatAmount(data.sellFee);
+        els.sellFee.className = `metric-value mono ${classifyValue(-data.sellFee)}`;
+
+        els.taxFee.textContent = formatAmount(data.taxFee);
+        els.taxFee.className = `metric-value mono ${classifyValue(-data.taxFee)}`;
+
+        els.netProfit.textContent = formatAmount(data.netProfit);
+        els.netProfit.className = `metric-value mono ${classifyValue(data.netProfit)}`;
+
+        els.roi.textContent = formatPercent(data.roi);
+        els.roi.className = `metric-value mono ${classifyValue(data.roi)}`;
+
+        els.breakEven.textContent = Number.isFinite(data.breakEvenPrice) ? theoreticalPriceFormat.format(data.breakEvenPrice) : "無可用價位";
+        els.breakEven.className = `metric-value mono ${Number.isFinite(data.breakEvenPrice) ? "value-neutral" : "value-negative"}`;
+        els.breakEvenSub.textContent = data.long ? "理論損益平衡賣出價" : "理論損益平衡回補價";
+
+        els.perShare.textContent = formatAmount(data.perShare);
+        els.perShare.className = `metric-value mono ${classifyValue(data.perShare)}`;
+
+        els.perLot.textContent = formatAmount(data.perLot);
+        els.perLot.className = `metric-value mono ${classifyValue(data.perLot)}`;
+
+        els.totalCost.textContent = formatAmount(data.totalCost);
+        els.totalCost.className = `metric-value mono ${classifyValue(-data.totalCost)}`;
+
+        els.effFeeRate.textContent = formatPercent(data.effFeeRate * 100, 4);
+        els.effFeeRate.className = "metric-value mono value-neutral";
+
+        const width = Math.min(Math.abs(data.roi), 30) / 30 * 100;
+        els.barFill.style.width = `${width}%`;
+        els.barFill.style.marginLeft = data.roi < 0 ? `${100 - width}%` : "0";
+        els.barFill.style.background = data.roi >= 0
+          ? "linear-gradient(90deg, #48d38a, #7ef0c4)"
+          : "linear-gradient(90deg, #ff6b6b, #ff9aa2)";
+
+        const tradeLabel = CONFIG.tradeTypes[state.tradeType].label;
+        const invalidFields = fields.filter(({ el }) =>
+          el.getAttribute("aria-invalid") === "true" && !el.closest(".hidden")
+        ).map(({ label }) => label);
+        const invalidMessage = invalidFields.length
+          ? `<br><strong>${invalidFields.join("、")}格式或範圍有誤。結果暫用該欄上次有效的值。</strong>`
+          : "";
+        const oddLotMessage = data.shares % 1000 !== 0
+          ? "<br><strong>輸入數量含零股。零股交易不適用現股當沖，以下沿用所選稅率作數學試算。</strong>"
+          : "";
+        els.liveStatus.innerHTML = `
+          <strong>${tradeLabel}模式 / ${state.direction === "long" ? "做多" : "做空"}模式已啟用。</strong><br>
+          證交稅率：<strong>${formatPercent(data.taxRate * 100)}</strong>；有效手續費率：<strong>${formatPercent(data.effFeeRate * 100, 4)}</strong>。<br>
+          稅後損益若為正數會顯示綠色，負數會顯示紅色。${invalidMessage}${oddLotMessage}
+        `;
+
+        els.resultHint.textContent = invalidFields.length
+          ? `${invalidFields.join("、")}待修正。以下數字使用上次有效值。`
+          : `目前使用「${tradeLabel}」與「${data.long ? "做多" : "做空"}」規則試算。報酬率基準為買入總額加買進手續費。`;
+
+        renderTarget(data);
+        renderFormula(data);
+      }
+
+      function renderTarget(data){
+        const label = data.long ? "賣出價" : "回補價";
+        if (!Number.isFinite(data.targetPrice)) {
+          els.targetPriceBox.innerHTML = "以目前股數、基準價和費率，找不到能恰好達成目標的理論價位（最低 0.01 元）。";
+          return;
+        }
+        els.targetPriceBox.innerHTML = `
+          目標稅後損益：<strong class="${classifyValue(data.targetProfit)}">${formatAmount(data.targetProfit)}</strong><br>
+          理論${label}：<strong class="scenario-strong">${theoreticalPriceFormat.format(data.targetPrice)}</strong><br>
+          目標報酬率：約 <strong class="${classifyValue(data.targetRoi)}">${formatPercent(data.targetRoi)}</strong>
+        `;
+      }
+
+      function renderFormula(data){
+        const taxRateText = formatPercent(data.taxRate * 100);
+        const dirText = state.direction === "long" ? "做多" : "做空";
+        const hiddenPriceLabel = state.direction === "long" ? "賣出價格" : "買入價格";
+        const visiblePriceLabel = state.direction === "long" ? "買入價格" : "賣出價格";
+
+        els.formulaBlock.textContent = [
+          `方向 = ${dirText}`,
+          `實際股數 = ${state.qtyUnit === "lots" ? "張數 × 1000" : "直接使用股數"}`,
+          `買入總額 = 買入價格 × 實際股數`,
+          `賣出總額 = 賣出價格 × 實際股數`,
+          `有效手續費率 = 牌告手續費率 × 券商手續費折扣`,
+          `買進手續費 = 買入總額 × 有效手續費率`,
+          `賣出手續費 = 賣出總額 × 有效手續費率`,
+          `證交稅（${CONFIG.tradeTypes[state.tradeType].label}）= 賣出總額 × ${taxRateText}`,
+          `稅後損益 = 賣出總額 - 買入總額 - 買進手續費 - 賣出手續費 - 證交稅`,
+          `實際投入成本 = 買入總額 + 買進手續費`,
+          `報酬率 = 稅後損益 ÷ 實際投入成本`,
+          `損益平衡價 = 反推後使稅後損益 = 0 的 ${hiddenPriceLabel}`,
+          `目前基準顯示側 = ${visiblePriceLabel}`
+        ].join("\n");
+      }
+
+
+      function renderScenarios(data){
+        els.upperCount.textContent = String(data.upperRows);
+        els.lowerCount.textContent = String(data.lowerRows);
+        els.upperMinusBtn.disabled = data.upperRows <= CONFIG.defaultUpperRows;
+        els.lowerMinusBtn.disabled = data.lowerRows <= CONFIG.defaultLowerRows;
+        els.upperPlusBtn.disabled = data.upperRows >= data.maxUp;
+        els.lowerPlusBtn.disabled = data.lowerRows >= data.maxDown;
+        els.currentBuyPriceValue.textContent = formatPrice(data.buyPrice);
+        els.currentSellPriceValue.textContent = formatPrice(data.sellPrice);
+
+        const fixedSide = data.long ? "買入價格" : "賣出價格";
+        const variableSide = data.long ? "賣出價格" : "買入價格";
+        els.referencePriceBox.innerHTML = `<strong>${fixedSide}</strong>固定為 <span class="scenario-strong">${formatPrice(data.basePrice)}</span>，<strong>${variableSide}</strong>會依情境步進變動。`;
+
+        const rows = [];
+        for (let offset = data.upperRows; offset >= -data.lowerRows; offset--) {
+          const row = data.tradeAtOffset(offset);
+          const isBase = offset === 0;
+          const active = offset === state.selectedOffset;
+          const label = isBase ? "原始 +0" : offset > 0 ? `上方 +${offset}` : `下方 ${offset}`;
+          const fixedCell = `<span class="scenario-fixed scenario-num">${formatPrice(data.basePrice)}</span>`;
+          const price = formatPrice(data.long ? row.sellPrice : row.buyPrice);
+          const variableCell = `<button type="button" class="scenario-btn scenario-num${active ? " active" : ""}" data-offset="${offset}" aria-label="${label}，${variableSide} ${price} 元" aria-pressed="${active}">${price}</button>`;
+          const feeTotal = row.buyFee + row.sellFee;
+          rows.push(`
+            <tr class="${isBase ? "base-row" : ""}">
+              <td class="scenario-label scenario-strong">${label}</td>
+              <td>${data.long ? fixedCell : variableCell}</td>
+              <td>${data.long ? variableCell : fixedCell}</td>
+              <td class="${classifyValue(-row.taxFee)}"><span class="scenario-num">${formatAmount(row.taxFee)}</span></td>
+              <td class="${classifyValue(-feeTotal)}"><span class="scenario-num">${formatAmount(feeTotal)}</span></td>
+              <td class="${classifyValue(row.netProfit)}"><span class="scenario-num">${formatAmount(row.netProfit)}</span></td>
+              <td class="${classifyValue(row.roi)}"><span class="scenario-num">${formatPercent(row.roi)}</span></td>
+            </tr>
+          `);
+        }
+        els.scenarioTable.innerHTML = rows.join("");
+      }
+
+      function updateAll(){
+        updatePriceSection();
+        syncTradeButtons();
+        syncDirectionButtons();
+        syncQtyButtons();
+        updateQuickDiscountActive();
+        const data = calc();
+        renderResults(data);
+        renderScenarios(data);
+      }
+
+      els.tradeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.tradeType = btn.dataset.tradeType;
+          updateAll();
+        });
+      });
+
+      els.directionButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (state.direction === btn.dataset.direction) return;
+          state.direction = btn.dataset.direction;
+          state.selectedOffset = 0;
+          updateAll();
+        });
+      });
+
+      els.qtyButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (state.qtyUnit === btn.dataset.qtyUnit) return;
+          state.qtyUnit = btn.dataset.qtyUnit;
+          const lots = state.qtyUnit === "lots";
+          const qty = els.quantity;
+          qty.min = lots ? "0.001" : "1";
+          qty.max = lots ? "100000" : "100000000";
+          qty.step = qty.min;
+          qty.inputMode = lots ? "decimal" : "numeric";
+          qty.value = String(lots ? state.shares / 1000 : state.shares);
+          qty.removeAttribute("aria-invalid");
+          els.quantityNote.textContent = lots ? "目前：張數" : "目前：股數";
+          updateAll();
+        });
+      });
+
+      document.querySelectorAll("#discountQuickRow .quick-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          els.feeDiscount.value = btn.dataset.discount;
+          els.feeDiscount.dispatchEvent(new Event("input"));
+        });
+      });
+
+      els.scenarioStepUnit.addEventListener("change", () => {
+        state.stepUnit = Number(els.scenarioStepUnit.value);
+        updateAll();
+      });
+
+      fields.forEach(field => {
+        const onEdit = () => {
+          if (readField(field)) updateAll();
+        };
+        field.el.addEventListener("input", onEdit);
+        field.el.addEventListener("change", onEdit);
+      });
+
+      document.querySelectorAll("[data-stepper]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const field = fields.find(({ el }) => el.id === btn.dataset.stepper);
+          const { el, key } = field;
+          const lots = key === "shares" && state.qtyUnit === "lots";
+          const step = Number(el.dataset.increment || el.step);
+          const direction = btn.dataset.dir === "up" ? 1 : -1;
+          const current = lots ? state.shares / 1000 : state[key];
+          const next = roundTo(current + direction * step, lots ? 3 : field.digits ?? 0);
+          el.value = String(Math.min(Number(el.max), Math.max(Number(el.min), next)));
+          el.dispatchEvent(new Event("input"));
+        });
+      });
+
+      els.scenarioTable.addEventListener("click", event => {
+        const btn = event.target.closest("button[data-offset]");
+        if (!btn) return;
+        state.selectedOffset = Number(btn.dataset.offset);
+        updateAll();
+        els.scenarioTable.querySelector(`button[data-offset="${state.selectedOffset}"]`).focus({ preventScroll: true });
+      });
+
+      [
+        [els.upperPlusBtn, "upperRows", els.upperCount, 5, CONFIG.defaultUpperRows],
+        [els.upperMinusBtn, "upperRows", els.upperCount, -5, CONFIG.defaultUpperRows],
+        [els.lowerPlusBtn, "lowerRows", els.lowerCount, 5, CONFIG.defaultLowerRows],
+        [els.lowerMinusBtn, "lowerRows", els.lowerCount, -5, CONFIG.defaultLowerRows]
+      ].forEach(([btn, key, count, change, minRows]) => {
+        btn.addEventListener("click", () => {
+          state[key] = Math.min(CONFIG.maxScenarioRows, Math.max(minRows, Number(count.textContent) + change));
+          updateAll();
+        });
+      });
+
+      fields.forEach(readField);
+      state.stepUnit = Number(els.scenarioStepUnit.value);
+      updateAll();
+
+    })();
+  </script>
+</body>
+</html>
