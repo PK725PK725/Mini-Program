@@ -1,1 +1,1360 @@
-5165116551
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>台灣黃金存摺投資損益計算機｜除錯修正版</title>
+  <style>
+    :root{
+      --bg:#070707;
+      --bg2:#101010;
+      --panel:rgba(18,18,18,.78);
+      --line:rgba(255,215,120,.15);
+      --line2:rgba(255,255,255,.08);
+      --text:#f6efe4;
+      --muted:#b6ada0;
+      --gold:#d9b86a;
+      --gold2:#f4d48d;
+      --green:#42df8c;
+      --red:#ff7272;
+      --shadow:0 24px 80px rgba(0,0,0,.46);
+      --shadow2:0 14px 34px rgba(0,0,0,.26);
+      --r-xl:30px;
+      --r-lg:22px;
+      --r-md:16px;
+      --font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(217,184,106,.12), transparent 18%),
+        radial-gradient(circle at 90% 20%, rgba(255,255,255,.05), transparent 16%),
+        radial-gradient(circle at 50% 85%, rgba(217,184,106,.08), transparent 18%),
+        linear-gradient(180deg, #070707 0%, #0b0b0b 52%, #060606 100%);
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-image: linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.015) 1px, transparent 1px);
+      background-size:34px 34px;
+      mask-image:radial-gradient(circle at center, black 50%, transparent 100%);
+      opacity:.75;
+    }
+
+    .app{max-width:1500px; margin:0 auto; padding:28px 18px 42px; position:relative;}
+    .hero{
+      position:relative; overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:34px;
+      background:linear-gradient(135deg, rgba(255,215,120,.12), rgba(255,255,255,.03) 30%, rgba(9,9,9,.90) 100%);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(18px);
+      padding:28px;
+    }
+    .hero::after{
+      content:""; position:absolute; right:-8%; bottom:-30%; width:420px; height:420px;
+      background:radial-gradient(circle, rgba(244,212,141,.14), transparent 66%); pointer-events:none;
+      filter:blur(10px);
+    }
+    .hero-top{display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:18px; align-items:start;}
+    .brand{display:flex; gap:16px; align-items:center; min-width:0;}
+    .brand-mark{
+      width:64px; height:64px; border-radius:22px; flex:0 0 auto; display:grid; place-items:center;
+      background:linear-gradient(145deg, rgba(255,241,196,.28), rgba(255,215,120,.10) 35%, rgba(139,108,43,.18) 100%);
+      border:1px solid rgba(255,218,137,.22); box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 14px 34px rgba(0,0,0,.38);
+    }
+
+    .brand h1{
+      margin:0;
+      color:#f4d48d;
+      font-size:clamp(30px, 3.85vw, 58px);
+      font-weight:900;
+      line-height:1.18;
+      letter-spacing:.025em;
+      text-wrap:balance;
+    }
+    @supports (background-clip:text){
+      .brand h1{
+        background-image:
+          linear-gradient(112deg, transparent 42%, #fff9df 50%, transparent 58%),
+          linear-gradient(180deg, #fff0be 10%, #edc66c 48%, #c28c32 68%, #f4d48d 94%);
+        background-size:250% 100%, 100% 100%;
+        background-position:100% 50%, center;
+        background-repeat:no-repeat;
+        background-clip:text;
+        color:transparent;
+      }
+      @media (prefers-reduced-motion:no-preference){
+        .brand h1{animation:titleShine 5.6s ease-in-out infinite}
+      }
+    }
+    @keyframes titleShine{
+      0%, 55%{background-position:100% 50%, center}
+      88%, 100%{background-position:0% 50%, center}
+    }
+    @media (forced-colors:active){
+      .brand h1{background:none; color:CanvasText; animation:none}
+    }
+    .brand p{margin:8px 0 0; color:var(--muted); line-height:1.7; max-width:980px;}
+    .hero-badges{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto;}
+    .hero-actions{
+      grid-column:1 / -1;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:10px;
+      margin-left:auto;
+      position:relative;
+      z-index:2;
+    }
+
+
+
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; border-radius:999px; padding:10px 14px; font-size:13px;
+      border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.04); color:#f7e9c7; backdrop-filter:blur(12px);
+    }
+
+    .stack{display:grid; gap:18px; margin-top:18px;}
+    .card{
+      position:relative; overflow:hidden; border-radius:var(--r-xl);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      box-shadow:var(--shadow2); backdrop-filter:blur(16px);
+    }
+    .card::before{content:""; position:absolute; inset:0; background:linear-gradient(135deg, rgba(255,255,255,.05), transparent 34%, transparent 72%, rgba(255,255,255,.04)); pointer-events:none;}
+    .card-header{display:flex; justify-content:space-between; gap:12px; align-items:center; padding:18px 20px 14px; border-bottom:1px solid rgba(255,255,255,.06);}
+    .card-header h2{margin:0; font-size:18px; letter-spacing:.02em; display:flex; align-items:center; gap:10px;}
+    .card-header small{display:block; margin-top:4px; color:var(--muted); line-height:1.55;}
+    .section-body{padding:18px 20px 20px;}
+
+    .mini-grid{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px;}
+    .stat{padding:18px; border:1px solid var(--line2); border-radius:20px; background:rgba(255,255,255,.04); min-height:94px;}
+    .stat .k{color:var(--muted); font-size:13px; margin-bottom:8px; line-height:1.4;}
+    .stat .v{font-size:20px; font-weight:900; letter-spacing:-.02em; line-height:1.25;}
+
+    .controls{display:flex; justify-content:space-between; gap:14px; align-items:center; flex-wrap:wrap;}
+    .meta{display:flex; flex-direction:column; gap:8px; color:var(--muted); font-size:14px; line-height:1.65;}
+    .btn{
+      appearance:none; border:0; cursor:pointer; min-height:50px;
+      border-radius:16px; padding:14px 18px; display:inline-flex; align-items:center; gap:10px;
+      font-weight:900; letter-spacing:.02em; white-space:nowrap; transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease, filter .18s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn.gold{color:#16110a; background:linear-gradient(135deg, #f8d58d, #d9a441); box-shadow:0 14px 30px rgba(217,164,65,.22)}
+    .btn.dark{color:var(--text); background:rgba(255,255,255,.04); border:1px solid var(--line2)}
+    .btn.buy{color:#062611; background:linear-gradient(135deg, rgba(120,255,180,.98), rgba(66,223,140,.98));}
+    .btn.sell{color:#2b0505; background:linear-gradient(135deg, rgba(255,146,146,.98), rgba(255,114,114,.98));}
+    .btn[disabled]{opacity:.7; cursor:not-allowed; transform:none}
+
+    .spinner{width:16px;height:16px;border-radius:50%; border:2px solid rgba(21,17,10,.22); border-top-color:rgba(21,17,10,.92); animation:spin 1s linear infinite; display:none;}
+    .loading .spinner{display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .query-grid{display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); gap:18px; align-items:stretch;}
+    .price-card{
+      grid-column:span 6; padding:24px; min-height:240px; overflow:hidden; position:relative;
+      border-radius:24px; border:1px solid var(--line2);
+      background:linear-gradient(180deg, rgba(15,23,42,.92), rgba(10,16,27,.80));
+      box-shadow:var(--shadow2);
+    }
+    .price-card::after{content:""; position:absolute; inset:auto -90px -90px auto; width:260px; height:260px; background:radial-gradient(circle, rgba(246,200,106,.13), transparent 66%); pointer-events:none;}
+    .label{display:flex; justify-content:space-between; align-items:center; gap:10px; color:#d8e1ef; font-size:14px;}
+    .price-name{font-weight:900; letter-spacing:.02em; color:var(--gold);}
+    .price-note{margin-top:10px; color:var(--muted); font-size:14px; line-height:1.8; min-height:28px;}
+    .price-value{margin-top:22px; font-size:clamp(40px, 5.8vw, 68px); line-height:1; letter-spacing:-.05em; font-weight:950; color:var(--gold2)}
+    .unit{margin-left:8px; font-size:14px; color:var(--muted); font-weight:700; letter-spacing:0}
+    .delta{margin-top:16px; display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; line-height:1.6; flex-wrap:wrap;}
+
+    .sessions{grid-column:span 5;}
+    .message{grid-column:span 7;}
+    .section-title{font-size:18px; font-weight:900; letter-spacing:-.02em; margin-bottom:12px;}
+    .session-list{display:grid; gap:12px;}
+    .session-item{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid var(--line2); color:#dbe6f4; font-size:14px; line-height:1.5;}
+    .session-item.active{border-color:rgba(246,200,106,.45); background:linear-gradient(135deg, rgba(246,200,106,.16), rgba(255,255,255,.03)); box-shadow:0 0 0 1px rgba(246,200,106,.08) inset;}
+    .session-item .right{color:var(--gold); font-weight:800; flex:0 0 auto;}
+    .notice{padding:16px 18px; border-radius:18px; border:1px solid rgba(125,211,252,.18); background:linear-gradient(180deg, rgba(125,211,252,.09), rgba(255,255,255,.03)); color:#d7e9ff; line-height:1.75; font-size:14px; min-height:90px;}
+    .notice.warn{border-color:rgba(251,113,133,.20); background:linear-gradient(180deg, rgba(251,113,133,.10), rgba(255,255,255,.03)); color:#ffe1e8;}
+    .source-links{margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;}
+    .link{color:var(--gold); text-decoration:none; border-bottom:1px solid rgba(246,200,106,.35); padding-bottom:1px;}
+
+    .two-col{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px;}
+    .input-card{border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.025); border-radius:20px; padding:16px;}
+    .input-card.buy{box-shadow:inset 0 0 0 1px rgba(66,223,140,.06)}
+    .input-card.sell{box-shadow:inset 0 0 0 1px rgba(255,114,114,.06)}
+    .input-card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px;}
+    .label-chip{font-weight:800; letter-spacing:.03em; display:inline-flex; align-items:center; gap:8px;}
+    .buy .label-chip{color:var(--green)}
+    .sell .label-chip{color:var(--red)}
+    .field-grid > .full-field{grid-column:1 / -1}
+    .metric .value{overflow-wrap:anywhere}
+    .field-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;}
+    .field{display:flex; flex-direction:column; gap:8px;}
+    .field span{font-size:13px; color:#f0e4c8; display:flex; align-items:center; gap:8px; line-height:1.25;}
+    .field small{color:var(--muted); line-height:1.45; font-size:12px;}
+    .input-wrap{display:flex; align-items:center; gap:8px;}
+    .input-box{position:relative; flex:1 1 auto;}
+    .input-icon{position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--gold); opacity:.95; pointer-events:none;}
+    input, select, textarea{
+      width:100%; border:1px solid rgba(255,255,255,.10); border-radius:14px; background:rgba(8,8,8,.72); color:var(--text);
+      padding:13px 14px 13px 42px; outline:none; font-size:15px; transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+    }
+    input::placeholder{color:rgba(255,255,255,.32)}
+    input:focus{border-color:rgba(255,215,120,.40); box-shadow:0 0 0 4px rgba(215,181,109,.12); background:rgba(12,12,12,.92)}
+    .import-btn{
+      flex:0 0 auto; min-width:126px; border-radius:14px; border:1px solid rgba(255,215,120,.18);
+      background:rgba(255,255,255,.04); color:#f4e3bf; cursor:pointer; padding:13px 14px; font-size:13px; font-weight:800;
+      transition:transform .16s ease, background .16s ease, border-color .16s ease, opacity .16s ease;
+    }
+    .import-btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.06); border-color:rgba(255,215,120,.30)}
+    .import-btn:disabled{opacity:.45; cursor:not-allowed; transform:none}
+
+    .helper{margin-top:12px; padding:12px 14px; border-radius:16px; background:linear-gradient(180deg, rgba(255,215,120,.08), rgba(255,255,255,.03)); border:1px solid rgba(255,215,120,.12); color:#f2e4c2; line-height:1.65; font-size:13px;}
+    .helper strong{color:var(--gold2)}
+    .actions{display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr 1fr; gap:12px; margin-top:16px;}
+
+    .transactions table{width:100%; border-collapse:collapse; min-width:980px;}
+    .table-wrap{width:100%; overflow:auto; border-radius:0 0 var(--r-xl) var(--r-xl);}
+    thead th{position:sticky; top:0; z-index:1; text-align:left; font-size:13px; color:#f1e2bf; background:rgba(255,255,255,.03); padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08); backdrop-filter:blur(12px)}
+    tbody td{padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.06); color:#f4ede2; font-size:14px; vertical-align:middle}
+    tbody tr:hover{background:rgba(255,255,255,.03)}
+    .type-badge{display:inline-flex; align-items:center; gap:8px; padding:7px 11px; border-radius:999px; font-weight:800; font-size:13px; letter-spacing:.02em; border:1px solid transparent;}
+    .type-badge.buy{color:var(--green); background:rgba(66,223,140,.12); border-color:rgba(66,223,140,.18)}
+    .type-badge.sell{color:var(--red); background:rgba(255,114,114,.12); border-color:rgba(255,114,114,.18)}
+    .cell-muted{color:var(--muted)}
+    .csv-btn{margin-left:auto; display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:14px; border:1px solid rgba(255,215,120,.16); background:rgba(255,255,255,.04); color:#f4e3bf; cursor:pointer; transition:transform .16s ease, background .16s ease, border-color .16s ease;}
+    .csv-btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.06); border-color:rgba(255,215,120,.28)}
+    .danger-btn{border:1px solid rgba(255,114,114,.18); background:rgba(255,114,114,.09); color:#ffd5d5; padding:9px 12px; border-radius:12px; cursor:pointer; transition:transform .16s ease, background .16s ease}
+    .danger-btn:hover{transform:translateY(-1px); background:rgba(255,114,114,.15)}
+
+    .metrics-grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;}
+    .metric{position:relative; border-radius:22px; padding:16px 16px 14px; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); overflow:hidden;}
+    .metric::before{content:""; position:absolute; inset:-40% -20% auto auto; width:160px; height:160px; background:radial-gradient(circle, rgba(215,181,109,.14), transparent 66%); pointer-events:none;}
+    .metric .name{display:flex; align-items:center; gap:9px; color:#f4e9cf; font-size:13px; margin-bottom:8px; line-height:1.35;}
+    .metric .value{font-size:clamp(22px, 2.2vw, 30px); font-weight:900; letter-spacing:.02em; line-height:1.08; margin-bottom:8px; text-wrap:balance;}
+    .metric .desc{font-size:12px; color:var(--muted); line-height:1.45}
+    .metric.positive .value{color:var(--green)}
+    .metric.negative .value{color:var(--red)}
+    .metric.neutral .value{color:var(--gold2)}
+
+    .footer-note{margin-top:18px; padding:22px 8px 0; color:#f0e2c2; text-align:center; line-height:1.9; font-size:13px;}
+    .footer-note .author{margin-top:10px; font-size:14px; color:var(--gold2); font-weight:700; letter-spacing:.06em;}
+    .toast{position:fixed; right:18px; bottom:18px; min-width:240px; max-width:min(92vw, 420px); padding:14px 16px; border-radius:16px; background:rgba(12,12,12,.94); border:1px solid rgba(255,215,120,.18); color:#f6ead1; box-shadow:var(--shadow); backdrop-filter:blur(14px); transform:translateY(24px); opacity:0; pointer-events:none; transition:opacity .22s ease, transform .22s ease; z-index:20;}
+    .toast.show{opacity:1; transform:translateY(0)}
+    .toast.error{border-color:rgba(255,114,114,.25)}
+    .toast.success{border-color:rgba(66,223,140,.25)}
+    .flash-up{animation:flashUp .88s ease}
+    .flash-down{animation:flashDown .88s ease}
+    @keyframes flashUp{0%{transform:scale(1)}35%{transform:scale(1.01); box-shadow:0 0 0 6px rgba(66,223,140,.10)}100%{transform:scale(1)}}
+    @keyframes flashDown{0%{transform:scale(1)}35%{transform:scale(1.01); box-shadow:0 0 0 6px rgba(255,114,114,.10)}100%{transform:scale(1)}}
+
+    @media (max-width: 1200px){
+      .sessions,.message{grid-column:span 12}
+    }
+    @media (max-width: 980px){
+      .price-card{grid-column:span 12}
+      .mini-grid{grid-template-columns:repeat(2, minmax(0,1fr))}
+      .two-col,.field-grid,.metrics-grid,.actions{grid-template-columns:1fr}
+    }
+    @media (max-width: 640px){
+      .app{padding:14px 10px 32px}
+      .hero{padding:20px; border-radius:26px}
+      .card{border-radius:22px}
+      .hero-top{column-gap:10px}
+      .brand{gap:10px}
+      .brand-mark{width:56px; height:56px; border-radius:18px}
+      .brand h1{font-size:clamp(18px, 4.5vw, 32px)}
+      .hero-top .back-link{max-width:29vw; padding:6px 10px; font-size:.8rem; white-space:normal; text-align:center}
+      .badge{padding:9px 12px; font-size:12px}
+      .hero-actions{align-items:flex-start; width:100%}
+
+      .mini-grid{grid-template-columns:1fr}
+      .controls{align-items:stretch}
+      .btn{width:100%; justify-content:center}
+      .session-item{flex-direction:column; align-items:flex-start}
+      .import-btn{width:100%}
+      .input-wrap{flex-direction:column; align-items:stretch}
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 18px;
+      border: 1px solid #0d4fb3;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(135deg, #1769e0, #0d4fb3);
+      text-decoration: none;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 10px 22px rgba(23, 105, 224, .22);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 1rem;
+      line-height: 1.58;
+      box-sizing: border-box;
+      width: fit-content;
+      flex-shrink: 0;
+      transform-origin: center;
+    }
+    .back-link:active { animation: elasticPress .42s cubic-bezier(.2, 1.4, .35, 1); }
+    @media (prefers-reduced-motion: reduce) {
+      .back-link:active { animation-duration: .01ms; }
+    }
+    @keyframes elasticPress {
+      0% { transform: scale(1); }
+      28% { transform: scale(1.08); }
+      62% { transform: scale(.985); }
+      100% { transform: scale(1); }
+    }
+    .hero > .back-link { margin: 0 0 10px auto; position: relative; z-index: 2; display: flex; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2.8L17.3 7.7V16.3L12 21.2L6.7 16.3V7.7L12 2.8Z" stroke="#f7e0a6" stroke-width="1.6"/>
+              <path d="M12 6.2V17.8" stroke="#d7b56d" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M7.8 9.1H16.2" stroke="#d7b56d" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M7.8 14.9H16.2" stroke="#d7b56d" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h1>台灣黃金存摺投資損益計算機</h1>
+            <p>整合台灣銀行黃金存摺即時牌價查詢與投資損益試算。可離線手動試算，也可查詢牌價、管理多筆交易與匯出 CSV。</p>
+          </div>
+        </div>
+        <a class="back-link" href="https://sites.google.com/view/pkpk725/" target="_blank" rel="noopener noreferrer">回 榮生的小程式區</a>
+        <div class="hero-actions">
+          <div class="hero-badges">
+            <div class="badge">即時試算</div>
+            <div class="badge">金色質感</div>
+            <div class="badge">單檔 HTML</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="stack">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2><span aria-hidden="true">🏦</span> 台灣銀行黃金存摺即時牌價查詢</h2>
+            <small>可將上方牌價匯入買進／賣出單價。請先確認掛牌日期與來源狀態。</small>
+          </div>
+          <button id="refreshBtn" class="btn gold" type="button"><span class="spinner" aria-hidden="true"></span><span id="refreshLabel">更新牌價</span></button>
+        </div>
+        <div class="section-body">
+          <div class="controls" style="margin-bottom:14px;">
+            <div class="meta">
+              <div><strong id="headlineStatus">等待操作</strong></div>
+              <div id="sourceHint">資料來源：依交易時段自動選擇A-台灣銀行黃金存摺牌價（營業時間） 或B-台灣銀行黃金存摺牌價（盤後／非交易時段）</div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end;">
+              <div class="badge"><span id="netDot" style="width:10px;height:10px;border-radius:50%;display:inline-block;background:#7dd3fc;box-shadow:0 0 0 4px rgba(125,211,252,.14);"></span><span id="netText">尚未更新</span></div>
+              <div class="badge"><span id="modeDot" style="width:10px;height:10px;border-radius:50%;display:inline-block;background:#7dd3fc;box-shadow:0 0 0 4px rgba(125,211,252,.14);"></span><span id="modeText">時段判斷中</span></div>
+              <div class="badge"><span id="clockText">--</span></div>
+            </div>
+          </div>
+
+          <div class="query-grid">
+            <article class="price-card" id="buyCard">
+              <div class="label"><span class="price-name">台灣銀行 - 本行買進</span><span id="buyTrend" style="color:var(--muted);font-weight:800;">—</span></div>
+              <div class="price-note">使用者賣給銀行的價格</div>
+              <div class="price-value" id="buyPriceDisplay">--<span class="unit">元 / 公克</span></div>
+              <div class="delta">來源狀態：<span id="buySource">尚未取得</span></div>
+            </article>
+
+            <article class="price-card" id="sellCard">
+              <div class="label"><span class="price-name">台灣銀行 - 本行賣出</span><span id="sellTrend" style="color:var(--muted);font-weight:800;">—</span></div>
+              <div class="price-note">銀行賣給使用者的價格</div>
+              <div class="price-value" id="sellPriceDisplay">--<span class="unit">元 / 公克</span></div>
+              <div class="delta">價差：<span id="spreadText">--</span></div>
+            </article>
+
+            <div class="mini-grid" style="grid-column:span 12;">
+              <div class="stat"><div class="k">掛牌時間（台北）</div><div class="v" id="updateTime">--</div></div>
+              <div class="stat"><div class="k">目前交易時段</div><div class="v" id="sessionText">--</div></div>
+              <div class="stat"><div class="k">更新方式</div><div class="v">開啟時／手動更新</div></div>
+              <div class="stat"><div class="k">最後取得（台北）</div><div class="v" id="lastSync">--</div></div>
+            </div>
+
+            <section class="card sessions" style="margin:0;">
+              <div class="section-body">
+                <div class="section-title">交易時段推估（依台北時間，未含國定假日）</div>
+                <div class="session-list">
+                  <div class="session-item" id="sessionBusiness"><span>營業時間：週一至週五 09:00 - 15:30</span><span class="right">營業時間</span></div>
+                  <div class="session-item" id="sessionAfter"><span>盤後交易：週一至週五 16:00 - 20:00</span><span class="right">盤後交易</span></div>
+                  <div class="session-item" id="sessionClosed"><span>非交易時段：其他時段與週末（查詢盤後牌價）</span><span class="right">非交易時段</span></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card message" style="margin:0;">
+              <div class="section-body">
+                <div class="section-title">狀態訊息</div>
+                <div id="statusMsg" class="notice">尚未取得資料，請按下「更新牌價」。</div>
+                <div class="source-links">
+                  <a class="link" href="https://rate.bot.com.tw/gold/chart/day/TWD" target="_blank" rel="noreferrer">營業時間牌價來源</a>
+                  <a class="link" href="https://rate.bot.com.tw/gold/chart/day/TWD/1" target="_blank" rel="noreferrer">盤後／非交易時段牌價來源</a>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2><span aria-hidden="true">🧮</span> 黃金存摺交易資料輸入</h2>
+            <small>買進價格＝台灣銀行「本行賣出」；賣出價格＝台灣銀行「本行買進」。可由上方即時牌價匯入。</small>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="two-col" style="margin-bottom:14px;">
+            <div class="input-card buy" id="buyPanel">
+              <div class="input-card-head"><div class="label-chip">🟢 買進欄位</div><div class="cell-muted">對應 <strong style="color:var(--green)">本行賣出</strong></div></div>
+              <div class="field-grid">
+                <label class="field full-field">
+                  <span>買進單價（每公克 / NTD）</span>
+                  <div class="input-wrap">
+                    <div class="input-box"><div class="input-icon">$</div><input id="buyPrice" inputmode="numeric" placeholder="例如 2500" type="number" min="1" step="1" /></div>
+                    <button class="import-btn" id="importBuyBtn" type="button" disabled>匯入目前牌價</button>
+                  </div>
+                  <small>按鈕會匯入上方「本行賣出」價格。</small>
+                </label>
+                <label class="field">
+                  <span>買進重量（g）</span>
+                  <div class="input-box"><div class="input-icon">g</div><input id="buyWeight" inputmode="numeric" placeholder="例如 10" type="number" min="1" step="1" /></div>
+                  <small>重量採整數公克，不顯示小數。</small>
+                </label>
+                <label class="field">
+                  <span>提示</span>
+                  <div class="input-box"><div class="input-icon">!</div><input value="買進價格對應台灣銀行賣出" disabled /></div>
+                  <small>請避免把買進與賣出價格對調。</small>
+                </label>
+              </div>
+            </div>
+
+            <div class="input-card sell" id="sellPanel">
+              <div class="input-card-head"><div class="label-chip">🔴 賣出欄位</div><div class="cell-muted">對應 <strong style="color:var(--red)">本行買進</strong></div></div>
+              <div class="field-grid">
+                <label class="field full-field">
+                  <span>賣出單價（每公克 / NTD）</span>
+                  <div class="input-wrap">
+                    <div class="input-box"><div class="input-icon">$</div><input id="sellPrice" inputmode="numeric" placeholder="例如 2680" type="number" min="1" step="1" /></div>
+                    <button class="import-btn" id="importSellBtn" type="button" disabled>匯入目前牌價</button>
+                  </div>
+                  <small>按鈕會匯入上方「本行買進」價格。</small>
+                </label>
+                <label class="field">
+                  <span>賣出重量（g）</span>
+                  <div class="input-box"><div class="input-icon">g</div><input id="sellWeight" inputmode="numeric" placeholder="例如 5" type="number" min="1" step="1" /></div>
+                  <small>依交易日期核對持有量。同日依新增順序計算。</small>
+                </label>
+                <label class="field">
+                  <span>備註</span>
+                  <div class="input-box"><div class="input-icon">📝</div><input value="賣出價格對應台灣銀行買進" disabled /></div>
+                  <small>請避免把買進與賣出價格對調。</small>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-grid" style="margin-bottom:14px;">
+            <label class="field">
+              <span>交易日期</span>
+              <div class="input-box"><div class="input-icon">📅</div><input id="tradeDate" type="date" /></div>
+              <small>買進與賣出共用。請依實際交易日期輸入。</small>
+            </label>
+            <label class="field">
+              <span>手續費（NTD）</span>
+              <div class="input-box"><div class="input-icon">¥</div><input id="fee" inputmode="numeric" placeholder="例如 30" type="number" min="0" step="1" /></div>
+              <small>買進與賣出共用。留空以 0 元計。</small>
+            </label>
+          </div>
+
+          <div class="helper"><strong>提醒：</strong> 買進＝你買入黃金存摺，價格對應台灣銀行「本行賣出」；賣出＝你賣出黃金存摺，價格對應台灣銀行「本行買進」。這是最容易搞混的地方。</div>
+
+          <div class="actions">
+            <button class="btn buy" id="addBuyBtn" type="button">➕ 新增買進</button>
+            <button class="btn sell" id="addSellBtn" type="button">➖ 新增賣出</button>
+            <button class="btn dark" id="loadExampleBtn" type="button">✨ 載入範例</button>
+            <button class="btn dark" id="clearBtn" type="button">🧹 清除資料</button>
+            <button class="btn dark" id="exportCsvBtn" type="button">⬇️ 匯出 CSV</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card transactions">
+        <div class="card-header">
+          <div>
+            <h2><span aria-hidden="true">📒</span> 多筆交易紀錄</h2>
+            <small>交易紀錄只保留在目前頁面，關閉或重新整理前可匯出 CSV 留存。</small>
+          </div>
+          <button class="csv-btn" id="exportCsvBtn2" type="button">⬇️ 匯出 CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table aria-label="交易紀錄表">
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>類別</th>
+                <th>單價（NTD / g）</th>
+                <th>重量（g）</th>
+                <th>手續費</th>
+                <th>買入成本／賣出淨收入</th>
+                <th>備註</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsBody">
+              <tr><td colspan="8" class="cell-muted" style="padding:22px 16px;">尚未加入交易資料。可先載入範例，或直接輸入後新增買進／新增賣出。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2><span aria-hidden="true">📈</span> 持有統計與損益結果</h2>
+            <small>按交易日期採移動加權平均成本，同日依新增順序。</small>
+          </div>
+        </div>
+        <div class="section-body">
+          <div id="holdingWarning" class="notice warn" style="min-height:0;margin-bottom:14px" role="status" hidden></div>
+          <div class="metrics-grid" id="metricsGrid">
+            <div class="metric neutral"><div class="name">🟩 總買入成本</div><div class="value" id="totalBuyCost">NT$ 0</div><div class="desc">買進單價 × 重量 + 手續費</div></div>
+            <div class="metric neutral"><div class="name">🟥 總賣出收入</div><div class="value" id="totalSellRevenue">NT$ 0</div><div class="desc">賣出單價 × 重量 - 手續費</div></div>
+            <div class="metric neutral"><div class="name">⚖️ 總持有重量</div><div class="value" id="totalHoldingWeight">0 g</div><div class="desc">買進重量合計 - 賣出重量合計</div></div>
+            <div class="metric neutral"><div class="name">💎 總手續費</div><div class="value" id="totalFee">NT$ 0</div><div class="desc">所有交易手續費加總</div></div>
+            <div class="metric neutral"><div class="name">🧮 平均每克成本</div><div class="value" id="avgCostPerGram">NT$ 0</div><div class="desc">剩餘持有成本 ÷ 剩餘重量</div></div>
+            <div class="metric neutral"><div class="name">📊 已實現損益</div><div class="value" id="profitLoss">NT$ 0</div><div class="desc">賣出淨收入 − 已售黃金成本</div></div>
+            <div class="metric neutral"><div class="name">📶 已實現報酬率</div><div class="value" id="roi">0%</div><div class="desc">已實現損益 ÷ 已售黃金成本 × 100%</div></div>
+            <div class="metric neutral"><div class="name">🎯 回本賣出價</div><div class="value" id="breakEvenPrice">NT$ 0</div><div class="desc">尚未回收的買入成本 ÷ 剩餘重量，無條件進位，不含未來賣出手續費</div></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer-note">
+        本工具僅供試算參考，不構成任何投資建議。<br />
+        實際交易價格、手續費、價差與交易限制，請以台灣銀行公告與交易確認畫面為準。<br />
+        <div class="author">彭榮生 製作</div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const SOURCE = {
+        business: 'https://rate.bot.com.tw/gold/chart/day/TWD?Lang=zh-TW',
+        after: 'https://rate.bot.com.tw/gold/chart/day/TWD/1?Lang=zh-TW'
+      };
+
+      const SOURCE_LABEL = {
+        business: 'A-台灣銀行黃金存摺牌價（營業時間）',
+        after: 'B-台灣銀行黃金存摺牌價（盤後／非交易時段）'
+      };
+
+      const CACHE_KEY = 'gold_passbook_price_cache_v7';
+      const REQUEST_TIMEOUT_MS = 7000;
+      const MIN_REASONABLE_PRICE = 100;
+      const MAX_REASONABLE_PRICE = 1000000;
+      const MAX_REASONABLE_SPREAD = 5000;
+
+      const fmtCurrency = new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 });
+      const fmtInt = new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 });
+      const fmtCalculatedMoney = new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const fmtPct = new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const state = {
+        currentData: null,
+        currentMode: null,
+        loading: false,
+        quoteStatus: '',
+        transactions: []
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        refreshBtn: $('refreshBtn'),
+        refreshLabel: $('refreshLabel'),
+        headlineStatus: $('headlineStatus'),
+        sourceHint: $('sourceHint'),
+        netDot: $('netDot'),
+        netText: $('netText'),
+        modeDot: $('modeDot'),
+        modeText: $('modeText'),
+        clockText: $('clockText'),
+        buyCard: $('buyCard'),
+        sellCard: $('sellCard'),
+        buyTrend: $('buyTrend'),
+        sellTrend: $('sellTrend'),
+        buyPriceDisplay: $('buyPriceDisplay'),
+        sellPriceDisplay: $('sellPriceDisplay'),
+        buySource: $('buySource'),
+        spreadText: $('spreadText'),
+        updateTime: $('updateTime'),
+        sessionText: $('sessionText'),
+        lastSync: $('lastSync'),
+        sessionBusiness: $('sessionBusiness'),
+        sessionAfter: $('sessionAfter'),
+        sessionClosed: $('sessionClosed'),
+        statusMsg: $('statusMsg'),
+        buyPrice: $('buyPrice'),
+        buyWeight: $('buyWeight'),
+        sellPrice: $('sellPrice'),
+        sellWeight: $('sellWeight'),
+        tradeDate: $('tradeDate'),
+        fee: $('fee'),
+        importBuyBtn: $('importBuyBtn'),
+        importSellBtn: $('importSellBtn'),
+        addBuyBtn: $('addBuyBtn'),
+        addSellBtn: $('addSellBtn'),
+        loadExampleBtn: $('loadExampleBtn'),
+        clearBtn: $('clearBtn'),
+        exportCsvBtn: $('exportCsvBtn'),
+        exportCsvBtn2: $('exportCsvBtn2'),
+        transactionsBody: $('transactionsBody'),
+        toast: $('toast'),
+        holdingWarning: $('holdingWarning'),
+        totalBuyCost: $('totalBuyCost'),
+        totalSellRevenue: $('totalSellRevenue'),
+        totalHoldingWeight: $('totalHoldingWeight'),
+        totalFee: $('totalFee'),
+        avgCostPerGram: $('avgCostPerGram'),
+        profitLoss: $('profitLoss'),
+        roi: $('roi'),
+        breakEvenPrice: $('breakEvenPrice')
+      };
+
+      function todayISO() {
+        const { year, month, day } = nowTaipeiParts();
+        return [year, month, day].join('-');
+      }
+
+      function showToast(message, type = 'success') {
+        els.toast.textContent = message;
+        els.toast.className = `toast ${type} show`;
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => { els.toast.className = 'toast'; }, 2600);
+      }
+
+      function setMode(mode) {
+        state.currentMode = mode;
+        els.modeText.textContent = mode === 'business' ? '營業時間' : mode === 'after' ? '盤後交易' : '非交易時段';
+        const active = mode === 'closed' ? '#7dd3fc' : '#42df8c';
+        const activeShadow = mode === 'closed' ? '0 0 0 4px rgba(125,211,252,.14)' : '0 0 0 4px rgba(66,223,140,.16)';
+        els.modeDot.style.background = active;
+        els.modeDot.style.boxShadow = activeShadow;
+        els.sessionBusiness.classList.toggle('active', mode === 'business');
+        els.sessionAfter.classList.toggle('active', mode === 'after');
+        els.sessionClosed.classList.toggle('active', mode === 'closed');
+        els.sessionText.textContent = mode === 'business' ? '營業時間' : mode === 'after' ? '盤後交易' : '非交易時段';
+      }
+
+      function normalizeText(s) {
+        return String(s || '')
+          .replace(/\u00a0/g, ' ')
+          .replace(/[ \t\r\n]+/g, ' ')
+          .replace(/：/g, ':')
+          .trim();
+      }
+
+      function newId() {
+        if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+        return `tx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      }
+
+      function requestedSourceMode(sessionOrMode) {
+        const mode = typeof sessionOrMode === 'string' ? sessionOrMode : sessionOrMode && sessionOrMode.mode;
+        return mode === 'business' ? 'business' : 'after';
+      }
+
+      function readCacheStore() {
+        try {
+          const raw = localStorage.getItem(CACHE_KEY);
+          if (!raw) return {};
+          const store = JSON.parse(raw);
+          return store && typeof store === 'object' && !Array.isArray(store) ? store : {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function saveCache(mode, data) {
+        try {
+          const sourceMode = requestedSourceMode(mode);
+          const store = readCacheStore();
+          const existing = loadCache(sourceMode);
+          if (existing && quoteSortKey(existing) > quoteSortKey(data)) return;
+          store[sourceMode] = data;
+          localStorage.setItem(CACHE_KEY, JSON.stringify(store));
+        } catch (_) {}
+      }
+
+      function loadCache(mode) {
+        try {
+          const sourceMode = requestedSourceMode(mode);
+          const data = readCacheStore()[sourceMode];
+          if (!data || data.sourceMode !== sourceMode) return null;
+          validateParsedData(data);
+          if (quoteSortKey(data) > quoteSortKey(taipeiQuoteTime())) return null;
+          return data;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      const taipeiClock = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Taipei',
+          weekday: 'short',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hourCycle: 'h23'
+      });
+
+      function nowTaipeiParts(date = new Date()) {
+        const parts = taipeiClock.formatToParts(date);
+        const out = {};
+        for (const p of parts) if (p.type !== 'literal') out[p.type] = p.value;
+        return out;
+      }
+
+      function getSessionInfo(date = new Date()) {
+        const p = nowTaipeiParts(date);
+        const map = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
+        const day = map[p.weekday];
+        const total = Number(p.hour) * 60 + Number(p.minute);
+        const isWeekday = day >= 1 && day <= 5;
+        const businessStart = 9 * 60;
+        const businessEnd = 15 * 60 + 30;
+        const afterStart = 16 * 60;
+        const afterEnd = 20 * 60;
+        let mode = 'closed';
+        let label = '目前非交易時段';
+        let sourceMode = 'after';
+
+        if (isWeekday && total >= businessStart && total <= businessEnd) {
+          mode = 'business';
+          label = '目前為營業時間牌價';
+          sourceMode = 'business';
+        } else if (isWeekday && total >= afterStart && total <= afterEnd) {
+          mode = 'after';
+          label = '目前為盤後交易牌價';
+          sourceMode = 'after';
+        }
+
+        return {
+          mode,
+          label,
+          sourceMode,
+          sourceLabel: SOURCE_LABEL[sourceMode],
+          stamp: `${p.year}/${p.month}/${p.day} ${p.hour}:${p.minute}:${p.second}`
+        };
+      }
+
+      function setLoading(loading) {
+        state.loading = loading;
+        updateImportButtons();
+        els.refreshBtn.disabled = loading;
+        els.refreshBtn.classList.toggle('loading', loading);
+        els.refreshLabel.textContent = loading ? '更新中…' : '更新牌價';
+      }
+
+      function formatMoney(v) {
+        return Number.isFinite(v) ? fmtInt.format(v) : '--';
+      }
+
+      function normalizeTime(value) {
+        const m = normalizeText(value).match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+        if (!m || Number(m[1]) > 23) return '';
+        return m[1].padStart(2, '0') + ':' + m[2] + (m[3] ? ':' + m[3] : '');
+      }
+
+      function normalizeQuoteDate(value) {
+        const m = String(value || '').match(/^(20\d{2})[/-](\d{1,2})[/-](\d{1,2})$/);
+        if (!m) return '';
+        const iso = [m[1], m[2].padStart(2, '0'), m[3].padStart(2, '0')].join('-');
+        const date = new Date(iso + 'T00:00:00Z');
+        return Number.isFinite(date.valueOf()) && date.toISOString().slice(0, 10) === iso ? iso.replaceAll('-', '/') : '';
+      }
+
+      function detectHeaderMap(cells) {
+        const time = cells.findIndex(v => /^(時間|Time)$/i.test(v));
+        const currency = cells.findIndex(v => /^(牌價幣別|Currency of Price)$/i.test(v));
+        const weight = cells.findIndex(v => /^(商品重量|Weight)$/i.test(v));
+        const buy = cells.findIndex(v => /^(本行買[入進]價格|Buying Price)$/i.test(v));
+        const sell = cells.findIndex(v => /^(本行賣出價格|Selling Price)$/i.test(v));
+        return [time, currency, weight, buy, sell].includes(-1) ? null : { time, currency, weight, buy, sell };
+      }
+
+      function parsePriceCell(value) {
+        const text = normalizeText(value);
+        return /^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(text) ? Number(text.replaceAll(',', '')) : null;
+      }
+
+      function candidateIsValid(buy, sell) {
+        if (!Number.isSafeInteger(buy) || !Number.isSafeInteger(sell)) return false;
+        if (buy < MIN_REASONABLE_PRICE || sell > MAX_REASONABLE_PRICE || sell <= buy) return false;
+        const spread = sell - buy;
+        return spread <= MAX_REASONABLE_SPREAD && spread <= buy * 0.35;
+      }
+
+      function collectQuoteRows(rows) {
+        let header = null;
+        const quotes = [];
+        for (const cells of rows) {
+          const detected = detectHeaderMap(cells);
+          if (detected) {
+            header = detected;
+            continue;
+          }
+          if (!header) continue;
+          const time = normalizeTime(cells[header.time]);
+          if (!time) continue;
+          if (!/\bTWD\b/i.test(cells[header.currency]) || !/^1\s*(公克|克|g)$/i.test(cells[header.weight])) continue;
+          quotes.push({ time, buy: parsePriceCell(cells[header.buy]), sell: parsePriceCell(cells[header.sell]) });
+        }
+        return quotes;
+      }
+
+      function taipeiQuoteTime(date = new Date()) {
+        const p = nowTaipeiParts(date);
+        return { quoteDate: [p.year, p.month, p.day].join('/'), quoteTime: [p.hour, p.minute, p.second].join(':') };
+      }
+
+      function parseGoldPage(rawText, sourceMode) {
+        const text = String(rawText || '');
+        const doc = new DOMParser().parseFromString(text, 'text/html');
+        const tables = [...doc.querySelectorAll('table')];
+        const headings = [...doc.querySelectorAll('h1, h2')].map(node => normalizeText(node.textContent));
+        if (!tables.length) {
+          for (const line of text.split(/\r?\n/)) {
+            if (/^\s*#{1,6}\s/.test(line)) headings.push(normalizeText(line.replace(/^\s*#+\s*/, '')));
+          }
+        }
+        const modeOf = heading => {
+          if (/歷史盤後交易黃金存摺牌價|Historical Price of Gold Passbook\s*[-–]\s*After Business Hours/i.test(heading)) return 'after';
+          if (/歷史營業時間黃金存摺牌價|Historical Price of Gold Passbook\s*[-–]\s*Business Hours/i.test(heading)) return 'business';
+          return '';
+        };
+        const modes = new Set(headings.map(modeOf).filter(Boolean));
+        if (modes.size !== 1 || !modes.has(sourceMode)) throw new Error('無法確認回應屬於所選的台銀牌價時段');
+
+        const dateText = text.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ');
+        const dateMatch = dateText.match(/(?:掛牌日期|牌價日期|Quoted Date)[\s*:：|]*(20\d{2}[/-]\d{1,2}[/-]\d{1,2})\b/i);
+        const quoteDate = normalizeQuoteDate(dateMatch?.[1]);
+        if (!quoteDate) throw new Error('找不到有效的台銀掛牌日期');
+
+        const quotes = tables.length
+          ? tables.flatMap(table => collectQuoteRows([...table.rows].map(row => [...row.cells].map(cell => normalizeText(cell.textContent)))))
+          : collectQuoteRows(text.split(/\r?\n/).filter(line => line.includes('|'))
+            .map(line => line.trim().replace(/^\||\|$/g, '').split('|').map(normalizeText)));
+        const newest = quotes.reduce((last, quote) => !last || quoteSortKey({ quoteTime: quote.time }) >= quoteSortKey({ quoteTime: last.time }) ? quote : last, null);
+        if (!newest || !candidateIsValid(newest.buy, newest.sell)) throw new Error('最新一筆台幣每公克牌價缺少有效買賣價格');
+
+        return {
+          buy: newest.buy,
+          sell: newest.sell,
+          quoteDate,
+          quoteTime: newest.time,
+          updateTime: quoteDate + ' ' + newest.time,
+          sourceMode,
+          rowValidated: true
+        };
+      }
+
+      function withCacheBuster(url) {
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}_=${Date.now()}`;
+      }
+
+      function buildFetchStrategies(targetUrl) {
+        const targetWithBust = withCacheBuster(targetUrl);
+        return [
+          { name: '台銀原始頁面', priority: 100, url: targetWithBust, kind: 'text', batch: 1 },
+          { name: 'Jina Reader', priority: 90, url: `https://r.jina.ai/${targetWithBust}`, kind: 'text', batch: 1 },
+          { name: 'AllOrigins Raw', priority: 80, url: `https://api.allorigins.win/raw?url=${encodeURIComponent(targetWithBust)}`, kind: 'text', batch: 1 },
+          { name: 'AllOrigins JSON', priority: 75, url: `https://api.allorigins.win/get?url=${encodeURIComponent(targetWithBust)}`, kind: 'json-contents', batch: 2 },
+          { name: 'CORS Proxy', priority: 70, url: `https://corsproxy.io/?${encodeURIComponent(targetWithBust)}`, kind: 'text', batch: 2 },
+          { name: 'CodeTabs Proxy', priority: 65, url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetWithBust)}`, kind: 'text', batch: 2 },
+          { name: 'Isomorphic Git Proxy', priority: 60, url: `https://cors.isomorphic-git.org/${targetWithBust}`, kind: 'text', batch: 2 }
+        ];
+      }
+
+      function createTimeoutSignal(ms) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(new DOMException('Request timeout', 'AbortError')), ms);
+        return { signal: controller.signal, cancel: () => clearTimeout(timer) };
+      }
+
+      async function fetchStrategy(strategy, sourceMode) {
+        const { signal, cancel } = createTimeoutSignal(REQUEST_TIMEOUT_MS);
+        try {
+          const response = await fetch(strategy.url, { cache: 'no-store', credentials: 'omit', signal });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          const body = await response.text();
+          const content = strategy.kind === 'json-contents' ? JSON.parse(body)?.contents : body;
+          if (typeof content !== 'string' || !content.trim()) throw new Error('回應沒有牌價內容');
+          const parsed = parseGoldPage(content, sourceMode);
+          const validated = validateParsedData(parsed);
+          if (quoteSortKey(parsed) > quoteSortKey(taipeiQuoteTime())) throw new Error('掛牌時間晚於目前台北時間');
+          return { ...parsed, ...validated, strategyName: strategy.name, strategyPriority: strategy.priority };
+        } catch (error) {
+          throw new Error(strategy.name + '：' + (signal.aborted ? '連線逾時' : error.message));
+        } finally {
+          cancel();
+        }
+      }
+
+      function quoteSortKey(item) {
+        const date = String(item.quoteDate || '').replace(/\D/g, '');
+        const time = String(item.quoteTime || '').replace(/\D/g, '');
+        return Number((date || '00000000') + time.padEnd(6, '0')) || 0;
+      }
+
+      function chooseBestResult(results) {
+        const groups = new Map();
+        for (const item of results) {
+          const key = [quoteSortKey(item), item.buy, item.sell].join('|');
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(item);
+        }
+
+        const ranked = [...groups.values()].sort((a, b) => {
+          const timeDiff = quoteSortKey(b[0]) - quoteSortKey(a[0]);
+          if (timeDiff) return timeDiff;
+          if (b.length !== a.length) return b.length - a.length;
+          return Math.max(...b.map(x => x.strategyPriority)) - Math.max(...a.map(x => x.strategyPriority));
+        });
+
+        return ranked[0].slice().sort((a, b) => b.strategyPriority - a.strategyPriority)[0];
+      }
+
+      async function fetchAndParsePrice(session, minimumQuoteKey) {
+        const sourceMode = requestedSourceMode(session);
+        const strategies = buildFetchStrategies(SOURCE[sourceMode]);
+        const errors = [];
+
+        for (const batchNumber of [1, 2]) {
+          const batch = strategies.filter(item => item.batch === batchNumber);
+          const settled = await Promise.allSettled(batch.map(item => fetchStrategy(item, sourceMode)));
+          const successes = [];
+          settled.forEach((result, index) => {
+            if (result.status === 'fulfilled') {
+              if (quoteSortKey(result.value) >= minimumQuoteKey) successes.push(result.value);
+              else errors.push(batch[index].name + '：報價早於已保留的牌價');
+            }
+            else errors.push(result.reason && result.reason.message ? result.reason.message : `${batch[index].name}：未知錯誤`);
+          });
+          if (successes.length) return chooseBestResult(successes);
+        }
+
+        const error = new Error('所有抓取與解析方式皆失敗');
+        error.details = errors;
+        throw error;
+      }
+
+      function validateParsedData(data) {
+        const buy = Number(data.buy);
+        const sell = Number(data.sell);
+        if (!candidateIsValid(buy, sell)) throw new Error('買入、賣出價格或價差不合理');
+        if (!normalizeQuoteDate(data.quoteDate) || !normalizeTime(data.quoteTime)) throw new Error('掛牌日期或時間格式不正確');
+        if (data.rowValidated !== true && data.bottomRowConfirmed !== true) throw new Error('缺少已核對的牌價列');
+        return { buy, sell };
+      }
+
+      function applyTrend(cardId, previous, next, trendId) {
+        const card = $(cardId);
+        const trend = $(trendId);
+        card.classList.remove('flash-up', 'flash-down');
+        void card.offsetWidth;
+        if (previous == null || next == null) {
+          trend.textContent = '—';
+          trend.style.color = 'var(--muted)';
+          return;
+        }
+        if (next > previous) {
+          card.classList.add('flash-up');
+          trend.textContent = '上升';
+          trend.style.color = 'var(--green)';
+        } else if (next < previous) {
+          card.classList.add('flash-down');
+          trend.textContent = '下降';
+          trend.style.color = 'var(--red)';
+        } else {
+          trend.textContent = '持平';
+          trend.style.color = 'var(--muted)';
+        }
+      }
+
+      function setNetworkStatus(label, color) {
+        els.netText.textContent = label;
+        els.netDot.style.background = color;
+        els.netDot.style.boxShadow = '0 0 0 4px ' + color + '24';
+      }
+
+      function updateImportButtons() {
+        const buttonText = state.quoteStatus === 'cache' ? '匯入快取牌價' : state.quoteStatus === 'historical' ? '匯入歷史牌價' : '匯入目前牌價';
+        for (const button of [els.importBuyBtn, els.importSellBtn]) {
+          button.disabled = state.loading || !state.currentData;
+          button.textContent = buttonText;
+        }
+      }
+
+      function renderQuery(data, status, message) {
+        const prev = state.currentData;
+        state.currentData = data;
+        state.quoteStatus = status;
+        const buy = Number(data.buy);
+        const sell = Number(data.sell);
+        els.buyPriceDisplay.innerHTML = formatMoney(buy) + '<span class="unit">元 / 公克</span>';
+        els.sellPriceDisplay.innerHTML = formatMoney(sell) + '<span class="unit">元 / 公克</span>';
+        els.spreadText.textContent = formatMoney(sell - buy) + ' 元 / 公克';
+        els.updateTime.textContent = normalizeQuoteDate(data.quoteDate) + ' ' + normalizeTime(data.quoteTime);
+        const syncedAt = new Date(data.cachedAt || '');
+        els.lastSync.textContent = Number.isFinite(syncedAt.valueOf())
+          ? syncedAt.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hourCycle: 'h23' }) : '--';
+        els.buySource.textContent = SOURCE_LABEL[data.sourceMode];
+        applyTrend('buyCard', prev?.buy, buy, 'buyTrend');
+        applyTrend('sellCard', prev?.sell, sell, 'sellTrend');
+
+        const label = status === 'cache' ? '使用快取' : status === 'historical' ? '歷史牌價' : '更新成功';
+        setNetworkStatus(label, status === 'success' ? '#42df8c' : '#ffb454');
+        els.headlineStatus.textContent = label;
+        els.statusMsg.className = status === 'success' ? 'notice' : 'notice warn';
+        els.statusMsg.textContent = message;
+        updateImportButtons();
+      }
+
+      function clearQuote() {
+        state.currentData = null;
+        state.quoteStatus = '';
+        for (const price of [els.buyPriceDisplay, els.sellPriceDisplay]) {
+          price.innerHTML = '--<span class="unit">元 / 公克</span>';
+        }
+        for (const field of [els.spreadText, els.updateTime, els.lastSync]) field.textContent = '--';
+        els.buySource.textContent = '尚未取得';
+        applyTrend('buyCard', null, null, 'buyTrend');
+        applyTrend('sellCard', null, null, 'sellTrend');
+        updateImportButtons();
+      }
+
+      function syncSession() {
+        const session = getSessionInfo();
+        els.clockText.textContent = session.stamp;
+        const previousSource = state.currentMode && requestedSourceMode(state.currentMode);
+        if (session.mode !== state.currentMode) setMode(session.mode);
+        if (previousSource === session.sourceMode) {
+          if (state.quoteStatus === 'success' && state.currentData.quoteDate !== taipeiQuoteTime().quoteDate) {
+            renderQuery(state.currentData, 'historical', '這是先前日期的掛牌，請按「更新牌價」查詢。');
+          }
+          return session;
+        }
+
+        clearQuote();
+        els.sourceHint.textContent = '資料來源：' + session.sourceLabel;
+        const cache = loadCache(session.sourceMode);
+        if (cache) {
+          renderQuery(cache, 'cache', '顯示這個時段上次取得的牌價，可按「更新牌價」重新查詢。');
+        } else {
+          els.headlineStatus.textContent = session.label;
+          setNetworkStatus('等待更新', '#7dd3fc');
+          els.statusMsg.className = 'notice';
+          els.statusMsg.textContent = '請按「更新牌價」查詢這個時段的牌價。';
+        }
+        return session;
+      }
+
+      async function updatePrice() {
+        if (state.loading) return;
+        const session = syncSession();
+        const sourceMode = session.sourceMode;
+        const previous = state.currentData;
+        setLoading(true);
+        setNetworkStatus('查詢中', '#7dd3fc');
+        els.statusMsg.className = 'notice';
+        els.statusMsg.textContent = '正在核對台銀掛牌日期、幣別、重量與買賣價格。';
+
+        try {
+          const fetched = await fetchAndParsePrice(session, previous ? quoteSortKey(previous) : 0);
+          if (syncSession().sourceMode !== sourceMode) return;
+          const data = { ...fetched, cachedAt: new Date().toISOString() };
+          const historical = data.quoteDate !== taipeiQuoteTime().quoteDate;
+          const message = historical ? '來源回傳先前日期的掛牌，請確認掛牌時間。' : '已取得該時段最新一筆有效掛牌。';
+          saveCache(sourceMode, data);
+          renderQuery(data, historical ? 'historical' : 'success', message + '（取得方式：' + data.strategyName + '）');
+        } catch (err) {
+          if (syncSession().sourceMode !== sourceMode) return;
+          const detail = err.details?.slice(0, 2).join('；') || err.message;
+          const cache = state.currentData || loadCache(sourceMode);
+          if (cache) {
+            renderQuery(cache, 'cache', '更新失敗，顯示這個時段上次取得的牌價。' + detail);
+          } else {
+            clearQuote();
+            setNetworkStatus('更新失敗', '#ff7272');
+            els.headlineStatus.textContent = '更新失敗';
+            els.statusMsg.className = 'notice warn';
+            els.statusMsg.textContent = '目前無可用牌價。可開啟下方台銀來源查詢後手動輸入。' + detail;
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      function addTransaction(type) {
+        const price = (type === 'buy' ? els.buyPrice : els.sellPrice).valueAsNumber;
+        const weight = (type === 'buy' ? els.buyWeight : els.sellWeight).valueAsNumber;
+        const fee = els.fee.value === '' && !els.fee.validity.badInput ? 0 : els.fee.valueAsNumber;
+        const date = els.tradeDate.value;
+        if (!date || !els.tradeDate.validity.valid || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return showToast('請輸入有效的交易日期。', 'error');
+        if (!Number.isSafeInteger(price) || price < 1) return showToast('單價需為 1 以上的有效整數。', 'error');
+        if (!Number.isSafeInteger(weight) || weight < 1) return showToast('重量需為 1 以上的有效整數公克。', 'error');
+        if (!Number.isSafeInteger(fee) || fee < 0) return showToast('手續費需為 0 以上的有效整數元。', 'error');
+        const amount = price * weight + fee;
+        const totalAmount = state.transactions.reduce((sum, t) => sum + t.price * t.weight + t.fee, amount);
+        if (!Number.isSafeInteger(totalAmount)) return showToast('交易總金額超出可精確計算的範圍。', 'error');
+
+        state.transactions.unshift({
+          id: newId(),
+          date,
+          type,
+          price,
+          weight,
+          fee,
+          note: type === 'buy' ? '新增買進：價格對應台灣銀行「本行賣出」' : '新增賣出：價格對應台灣銀行「本行買進」'
+        });
+        renderAll();
+        showToast(type === 'buy' ? '已新增買進交易。' : '已新增賣出交易。', 'success');
+      }
+
+      function deleteTransaction(id) {
+        state.transactions = state.transactions.filter(t => t.id !== id);
+        renderAll();
+        showToast('已刪除交易紀錄。', 'success');
+      }
+
+      function tradeAmount(t) {
+        return t.price * t.weight + (t.type === 'buy' ? t.fee : -t.fee);
+      }
+
+      function computeStats(transactions) {
+        let totalBuyCost = 0;
+        let totalSellRevenue = 0;
+        let totalFee = 0;
+        let totalHoldingWeight = 0;
+        let remainingCost = 0;
+        let soldCost = 0;
+        let oversellDate = '';
+
+        // 紀錄以最新新增在前儲存；先反轉，讓同日交易依新增順序計算。
+        const ordered = transactions.slice().reverse().sort((a, b) => a.date.localeCompare(b.date));
+        for (const t of ordered) {
+          totalFee += t.fee;
+          if (t.type === 'buy') {
+            const cost = tradeAmount(t);
+            totalBuyCost += cost;
+            remainingCost += cost;
+            totalHoldingWeight += t.weight;
+          } else {
+            totalSellRevenue += tradeAmount(t);
+            if (t.weight > totalHoldingWeight && !oversellDate) oversellDate = t.date;
+            if (!oversellDate) {
+              const cost = t.weight === totalHoldingWeight ? remainingCost : remainingCost * (t.weight / totalHoldingWeight);
+              soldCost += cost;
+              remainingCost -= cost;
+            }
+            totalHoldingWeight -= t.weight;
+          }
+        }
+
+        const hasHolding = !oversellDate && totalHoldingWeight > 0;
+        const profitLoss = oversellDate ? null : totalSellRevenue - soldCost;
+        const roi = !oversellDate && soldCost > 0 ? (profitLoss / soldCost) * 100 : null;
+        const avgCostPerGram = hasHolding ? remainingCost / totalHoldingWeight : null;
+        const breakEvenPrice = hasHolding ? Math.ceil(Math.max(0, totalBuyCost - totalSellRevenue) / totalHoldingWeight) : null;
+
+        return { totalBuyCost, totalSellRevenue, totalHoldingWeight, totalFee, avgCostPerGram, profitLoss, roi, breakEvenPrice, oversellDate };
+      }
+
+      function classByValue(value) {
+        if (value > 0) return 'positive';
+        if (value < 0) return 'negative';
+        return 'neutral';
+      }
+
+      function updateMetric(el, valueText, cls) {
+        el.textContent = valueText;
+        const parent = el.closest('.metric');
+        parent.classList.remove('positive', 'negative', 'neutral');
+        parent.classList.add(cls);
+      }
+
+      function renderMetrics(stats) {
+        updateMetric(els.totalBuyCost, fmtCurrency.format(stats.totalBuyCost), 'neutral');
+        updateMetric(els.totalSellRevenue, fmtCurrency.format(stats.totalSellRevenue), 'neutral');
+        updateMetric(els.totalHoldingWeight, fmtInt.format(stats.totalHoldingWeight) + ' g', classByValue(Math.min(0, stats.totalHoldingWeight)));
+        updateMetric(els.totalFee, fmtCurrency.format(stats.totalFee), 'neutral');
+        updateMetric(els.avgCostPerGram, stats.avgCostPerGram == null ? '不可計算' : fmtCalculatedMoney.format(stats.avgCostPerGram), 'neutral');
+        const profit = stats.profitLoss == null ? '不可計算' : fmtCalculatedMoney.format(stats.profitLoss);
+        updateMetric(els.profitLoss, profit, classByValue(stats.profitLoss));
+        updateMetric(els.roi, stats.roi == null ? '不可計算' : fmtPct.format(stats.roi) + '%', classByValue(stats.roi));
+        updateMetric(els.breakEvenPrice, stats.breakEvenPrice == null ? '不可計算' : fmtCurrency.format(stats.breakEvenPrice), 'neutral');
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function renderTransactionsTable() {
+        if (!state.transactions.length) {
+          els.transactionsBody.innerHTML = `<tr><td colspan="8" class="cell-muted" style="padding:22px 16px;">尚未加入交易資料。可先載入範例，或直接輸入後新增買進／新增賣出。</td></tr>`;
+          return;
+        }
+
+        els.transactionsBody.innerHTML = state.transactions.map(t => {
+          const totalCost = tradeAmount(t);
+          return `<tr>
+            <td>${escapeHtml(t.date)}</td>
+            <td><span class="type-badge ${t.type}">${t.type === 'buy' ? '買進' : '賣出'}</span></td>
+            <td>${fmtCurrency.format(t.price)}</td>
+            <td>${fmtInt.format(t.weight)} g</td>
+            <td>${fmtCurrency.format(t.fee)}</td>
+            <td>${fmtCurrency.format(totalCost)}</td>
+            <td class="cell-muted">${escapeHtml(t.note)}</td>
+            <td><button class="danger-btn" type="button" data-del="${escapeHtml(t.id)}">刪除</button></td>
+          </tr>`;
+        }).join('');
+
+        document.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', () => deleteTransaction(btn.dataset.del)));
+      }
+
+      function renderAll() {
+        renderTransactionsTable();
+        const stats = computeStats(state.transactions);
+        renderMetrics(stats);
+        els.holdingWarning.hidden = !stats.oversellDate;
+        els.holdingWarning.textContent = stats.oversellDate
+          ? stats.oversellDate + ' 有賣出重量超過當時持有量。請檢查交易日期、順序或重量。修正前暫停顯示持有成本及損益。'
+          : '';
+      }
+
+      function loadExample() {
+        if (state.transactions.length && !confirm('載入範例會取代目前交易紀錄，確定繼續嗎？')) return;
+        const date = todayISO();
+        state.transactions = [
+          { id: newId(), date, type: 'buy', price: 2500, weight: 10, fee: 30, note: '新增買進：價格對應台灣銀行「本行賣出」' },
+          { id: newId(), date, type: 'buy', price: 2525, weight: 5, fee: 20, note: '新增買進：價格對應台灣銀行「本行賣出」' },
+          { id: newId(), date, type: 'sell', price: 2680, weight: 4, fee: 15, note: '新增賣出：價格對應台灣銀行「本行買進」' }
+        ].reverse();
+        els.buyPrice.value = 2530;
+        els.buyWeight.value = 10;
+        els.sellPrice.value = 2680;
+        els.sellWeight.value = 4;
+        els.fee.value = 30;
+        els.tradeDate.value = todayISO();
+        renderAll();
+        showToast('已載入範例資料。', 'success');
+      }
+
+      function clearAll() {
+        if (state.transactions.length && !confirm('確定清除目前所有交易紀錄嗎？')) return;
+        state.transactions = [];
+        [els.buyPrice, els.buyWeight, els.sellPrice, els.sellWeight, els.fee].forEach(el => el.value = '');
+        els.tradeDate.value = todayISO();
+        renderAll();
+        showToast('已清除所有資料。', 'success');
+      }
+
+      function exportCsv() {
+        if (!state.transactions.length) return showToast('目前沒有資料可匯出。', 'error');
+        const headers = ['日期', '類別', '單價(NTD/g)', '重量(g)', '手續費(NTD)', '買入成本／賣出淨收入(NTD)', '備註'];
+        const rows = state.transactions.map(t => {
+          const totalCost = tradeAmount(t);
+          return [t.date, t.type === 'buy' ? '買進' : '賣出', t.price, t.weight, t.fee, totalCost, t.note];
+        });
+        const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replaceAll('"', '""')}"`).join(',')).join('\r\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gold_passbook_transactions_${todayISO()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('CSV 已匯出，可用於記帳或備份。', 'success');
+      }
+
+      function importCurrentPrice(target) {
+        syncSession();
+        if (state.loading || !state.currentData) return showToast('請先取得上方牌價，再匯入單價。', 'error');
+        const quote = state.quoteStatus === 'cache' ? '快取' : state.quoteStatus === 'historical' ? '歷史' : '目前';
+        if (target === 'buy') {
+          els.buyPrice.value = state.currentData.sell;
+          showToast('已匯入' + quote + '「本行賣出」到買進單價。', 'success');
+        } else {
+          els.sellPrice.value = state.currentData.buy;
+          showToast('已匯入' + quote + '「本行買進」到賣出單價。', 'success');
+        }
+      }
+
+      function bindEvents() {
+        els.refreshBtn.addEventListener('click', updatePrice);
+        els.importBuyBtn.addEventListener('click', () => importCurrentPrice('buy'));
+        els.importSellBtn.addEventListener('click', () => importCurrentPrice('sell'));
+        els.addBuyBtn.addEventListener('click', () => addTransaction('buy'));
+        els.addSellBtn.addEventListener('click', () => addTransaction('sell'));
+        els.loadExampleBtn.addEventListener('click', loadExample);
+        els.clearBtn.addEventListener('click', clearAll);
+        els.exportCsvBtn.addEventListener('click', exportCsv);
+        els.exportCsvBtn2.addEventListener('click', exportCsv);
+        document.addEventListener('keydown', (e) => {
+          if (!e.repeat && !e.isComposing && (e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.closest('#buyPanel')) {
+            e.preventDefault();
+            addTransaction('buy');
+          }
+        });
+      }
+
+      function init() {
+        els.tradeDate.value = todayISO();
+        bindEvents();
+        renderAll();
+        updatePrice();
+        setInterval(syncSession, 1000);
+        showToast('介面已載入，歡迎開始試算。', 'success');
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
